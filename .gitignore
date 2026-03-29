@@ -42,3 +42,17 @@ pip-wheel-metadata/
 .idea/
 .DS_Store
 Thumbs.db
+.env
+*.pyc
+*.pyc
+app/__pycache__/__init__.cpython-310.pyc
+app/__pycache__/main.cpython-310.pyc
+app/api/__pycache__/__init__.cpython-310.pyc
+app/core/__pycache__/__init__.cpython-310.pyc
+app/core/__pycache__/config.cpython-310.pyc
+app/schemas/__pycache__/__init__.cpython-310.pyc
+app/schemas/__pycache__/slack.cpython-310.pyc
+app/services/__pycache__/__init__.cpython-310.pyc
+app/services/__pycache__/slack_events.cpython-310.pyc
+app/services/__pycache__/slack_security.cpython-310.pyc
+app/api/__pycache__/endpoints.cpython-310.pyc
