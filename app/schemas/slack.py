@@ -15,5 +15,6 @@ class SlackMentionEvent(BaseModel):
     type: str
     user: str
     channel: str
+    text: str = ""
     ts: str | None = None
     thread_ts: str | None = None
