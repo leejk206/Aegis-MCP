@@ -10,6 +10,18 @@ app = FastAPI(title="Aegis-MCP")
 app.include_router(api_router)
 
 
+@app.on_event("startup")
+async def log_openai_key_status() -> None:
+    settings = get_settings()
+    if settings.openai_api_key:
+        print(
+            f"API Key loaded successfully ({settings.openai_api_key[:4]}****)",
+            flush=True,
+        )
+    else:
+        print("OPENAI_API_KEY is empty. LLM features will use fallback.", flush=True)
+
+
 @app.get("/health")
 async def health_check() -> dict[str, str]:
     return {"status": "ok"}
