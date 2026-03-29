@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from pathlib import Path
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
@@ -15,7 +16,8 @@ class Settings(BaseModel):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    load_dotenv()
+    env_path = Path(__file__).resolve().parents[2] / ".env"
+    load_dotenv(dotenv_path=env_path, override=False)
     return Settings(
         slack_bot_token=os.getenv("SLACK_BOT_TOKEN", ""),
         slack_signing_secret=os.getenv("SLACK_SIGNING_SECRET", ""),
