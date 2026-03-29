@@ -12,6 +12,8 @@ class Settings(BaseModel):
     slack_bot_token: str = Field(..., min_length=1)
     slack_signing_secret: str = Field(..., min_length=1)
     app_port: int = 8000
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
 
 
 @lru_cache(maxsize=1)
@@ -22,4 +24,6 @@ def get_settings() -> Settings:
         slack_bot_token=os.getenv("SLACK_BOT_TOKEN", ""),
         slack_signing_secret=os.getenv("SLACK_SIGNING_SECRET", ""),
         app_port=int(os.getenv("APP_PORT", "8000")),
+        openai_api_key=os.getenv("OPENAI_API_KEY", ""),
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     )
