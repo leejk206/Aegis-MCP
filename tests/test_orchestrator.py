@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from unittest.mock import patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -9,6 +10,7 @@ from app.core import database
 from app.core.database import Base
 from app.models.document import Document
 from app.models.user import User
+from app.services.intent_classifier import IntentClassification, IntentClassifier, IntentType
 from app.services.orchestrator import AegisOrchestrator
 
 
@@ -59,9 +61,19 @@ def setup_in_memory_db(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_mac_clearance_allow(setup_in_memory_db: None) -> None:
     orchestrator = AegisOrchestrator()
-    orchestrator.intent_classifier.settings.openai_api_key = ""
-
-    result = orchestrator.process_slack_message("U_LEVEL4", "검색: ProjectX")
+    with patch.object(
+        IntentClassifier,
+        "classify",
+        return_value=IntentClassification(
+            intent=IntentType.DATA_RETRIEVAL,
+            query="ProjectX",
+        ),
+    ), patch.object(
+        IntentClassifier,
+        "answer_with_context",
+        return_value="ProjectX 관련 요약 응답입니다.",
+    ):
+        result = orchestrator.process_slack_message("U_LEVEL4", "검색: ProjectX")
 
     assert "RAG 답변" in result
     assert "[MASKED_CONFIDENTIAL]" in result
@@ -69,9 +81,20 @@ def test_mac_clearance_allow(setup_in_memory_db: None) -> None:
 
 def test_mac_clearance_deny(setup_in_memory_db: None) -> None:
     orchestrator = AegisOrchestrator()
-    orchestrator.intent_classifier.settings.openai_api_key = ""
-
-    result = orchestrator.process_slack_message("U_LEVEL1", "검색: ProjectX")
+    with patch.object(
+        IntentClassifier,
+        "classify",
+        return_value=IntentClassification(
+            intent=IntentType.DATA_RETRIEVAL,
+            query="ProjectX",
+        ),
+    ), patch.object(
+        IntentClassifier,
+        "answer_with_context",
+        return_value="이 값은 호출되면 안 됩니다.",
+    ) as mocked_answer:
+        result = orchestrator.process_slack_message("U_LEVEL1", "검색: ProjectX")
 
     assert "검색 결과가 없습니다." in result
     assert "RAG 답변" not in result
+    mocked_answer.assert_not_called()
