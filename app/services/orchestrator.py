@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import re
 
-from app.services.data_store import MockDocument
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.models.document import Document
 from app.services.dp_filter import DPFilter
-from app.services.intent_classifier import IntentClassifier, IntentType
+from app.services.intent_classifier import ContextDocument, IntentClassifier, IntentType
 from app.services.mac_service import MACService
 
 
@@ -17,30 +20,45 @@ class AegisOrchestrator:
         self.intent_classifier = IntentClassifier()
 
     def process_slack_message(self, user_id: str, raw_text: str) -> str:
+        db_gen = get_db()
+        db = next(db_gen)
         print(f"[INCOMING] User: {user_id} | Raw: '{raw_text}'", flush=True)
-        classification = self.intent_classifier.classify(raw_text)
-        intent = classification.intent
-        print(f"[INTENT] User: {user_id} | Intent: {intent.value}", flush=True)
+        try:
+            classification = self.intent_classifier.classify(raw_text)
+            intent = classification.intent
+            print(f"[INTENT] User: {user_id} | Intent: {intent.value}", flush=True)
 
-        if intent == IntentType.DATA_RETRIEVAL:
-            response_text = self._handle_data_retrieval(
-                user_id=user_id,
-                question=raw_text,
-                query=classification.query,
-            )
-        elif intent == IntentType.SECURITY_QUERY:
-            response_text = self._handle_security_query(user_id)
-        else:
-            response_text = self._handle_general_conversation(raw_text)
+            if intent == IntentType.DATA_RETRIEVAL:
+                response_text = self._handle_data_retrieval(
+                    user_id=user_id,
+                    question=raw_text,
+                    query=classification.query,
+                    db=db,
+                )
+            elif intent == IntentType.SECURITY_QUERY:
+                response_text = self._handle_security_query(user_id=user_id, db=db)
+            else:
+                response_text = self._handle_general_conversation(raw_text)
 
-        print("[OUTPUT] Applying final masking guardrail.", flush=True)
-        return self._format_output(response_text)
+            print("[OUTPUT] Applying final masking guardrail.", flush=True)
+            return self._format_output(response_text)
+        finally:
+            try:
+                next(db_gen)
+            except StopIteration:
+                pass
 
-    def _handle_data_retrieval(self, user_id: str, question: str, query: str) -> str:
+    def _handle_data_retrieval(
+        self,
+        user_id: str,
+        question: str,
+        query: str,
+        db: Session,
+    ) -> str:
         print(f"[SEARCH] Query: '{query}' by User: {user_id}", flush=True)
 
-        user_clearance = self.mac_service.get_user_clearance(user_id)
-        accessible_documents = self.mac_service.get_accessible_documents(user_id)
+        user_clearance = self.mac_service.get_user_clearance(user_id, db)
+        accessible_documents = self.mac_service.get_accessible_documents(user_id, db)
 
         if not query:
             return (
@@ -59,12 +77,15 @@ class AegisOrchestrator:
             )
 
         print(f"[RAG] Building context from {len(results)} documents.", flush=True)
-        rag_answer = self.intent_classifier.answer_with_context(question=question, documents=results)
+        rag_answer = self.intent_classifier.answer_with_context(
+            question=question,
+            documents=[self._document_to_mock(document) for document in results],
+        )
         print(f"[RESULT] Found {len(results)} docs | Masking applied.", flush=True)
         return f"사용자 등급: {user_clearance}\nRAG 답변:\n{rag_answer}"
 
-    def _handle_security_query(self, user_id: str) -> str:
-        clearance = self.mac_service.get_user_clearance(user_id)
+    def _handle_security_query(self, user_id: str, db: Session) -> str:
+        clearance = self.mac_service.get_user_clearance(user_id, db)
         return (
             f"현재 사용자 보안 등급은 {clearance}입니다.\n"
             "MAC 정책상 본인 등급 이하 문서만 조회할 수 있습니다."
@@ -79,9 +100,9 @@ class AegisOrchestrator:
 
     def _search_documents(
         self,
-        accessible_documents: list[MockDocument],
+        accessible_documents: list[Document],
         lowered_query: str,
-    ) -> list[MockDocument]:
+    ) -> list[Document]:
         query_tokens = self._query_tokens(lowered_query)
         if not query_tokens:
             query_tokens = [lowered_query]
@@ -94,11 +115,11 @@ class AegisOrchestrator:
 
     def _matches_document(
         self,
-        document: MockDocument,
+        document: Document,
         lowered_query: str,
         query_tokens: list[str],
     ) -> bool:
-        searchable_text = f"{document['title']} {document['content']}".lower()
+        searchable_text = f"{document.title} {document.content}".lower()
         if lowered_query in searchable_text:
             return True
         return any(token in searchable_text for token in query_tokens)
@@ -115,3 +136,11 @@ class AegisOrchestrator:
         )
         masked_text = self.dp_filter.mask_pii(masked_text)
         return masked_text
+
+    def _document_to_mock(self, document: Document) -> ContextDocument:
+        return {
+            "id": document.document_id,
+            "title": document.title,
+            "content": document.content,
+            "required_clearance": document.required_clearance,
+        }

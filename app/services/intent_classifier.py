@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from enum import Enum
+from typing import TypedDict
 from urllib import error, request
 
-from app.services.data_store import MockDocument
 from app.core.config import get_settings
 
 
@@ -21,6 +21,13 @@ class IntentClassification:
     query: str
 
 
+class ContextDocument(TypedDict):
+    id: str
+    title: str
+    content: str
+    required_clearance: int
+
+
 class IntentClassifier:
     def __init__(self) -> None:
         self.settings = get_settings()
@@ -34,7 +41,7 @@ class IntentClassifier:
         except (error.URLError, TimeoutError, ValueError, KeyError, json.JSONDecodeError):
             return self._fallback_classify(raw_text)
 
-    def answer_with_context(self, question: str, documents: list[MockDocument]) -> str:
+    def answer_with_context(self, question: str, documents: list[ContextDocument]) -> str:
         if not documents:
             return "참고할 문서가 없어 답변할 수 없습니다."
 
@@ -81,7 +88,7 @@ class IntentClassifier:
         intent = self._normalize_intent(intent_value)
         return IntentClassification(intent=intent, query=query)
 
-    def _answer_with_llm_context(self, question: str, documents: list[MockDocument]) -> str:
+    def _answer_with_llm_context(self, question: str, documents: list[ContextDocument]) -> str:
         system_prompt = (
             "다음 문서 내용만 근거로 한국어로 답하라. "
             "문서에 없는 내용은 절대 추측하지 말고 모르면 '모르겠습니다'라고 답하라."
@@ -133,7 +140,7 @@ class IntentClassifier:
             return IntentClassification(intent=IntentType.SECURITY_QUERY, query="")
         return IntentClassification(intent=IntentType.GENERAL_CONVERSATION, query="")
 
-    def _fallback_grounded_answer(self, question: str, documents: list[MockDocument]) -> str:
+    def _fallback_grounded_answer(self, question: str, documents: list[ContextDocument]) -> str:
         lines = [
             "LLM 연결이 없어 문서 기반 요약으로 답변합니다.",
             f"질문: {question}",

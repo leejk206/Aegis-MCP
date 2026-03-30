@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from app.api.endpoints import router as api_router
 from app.core.config import get_settings
+from app.db.init_db import init_db
 
 app = FastAPI(title="Aegis-MCP")
 app.include_router(api_router)
@@ -12,6 +13,7 @@ app.include_router(api_router)
 
 @app.on_event("startup")
 async def log_openai_key_status() -> None:
+    init_db()
     settings = get_settings()
     if settings.openai_api_key:
         print(
