@@ -22,10 +22,12 @@ class IntentClassification:
 
 
 class ContextDocument(TypedDict):
-    id: str
+    task_id: str
     title: str
-    content: str
-    required_clearance: int
+    description: str
+    assigned_role: str
+    status: str
+    payload: str | None
 
 
 class IntentClassifier:
@@ -96,8 +98,9 @@ class IntentClassifier:
         context_lines: list[str] = []
         for document in documents:
             context_lines.append(
-                f"[{document['id']}] {document['title']} | "
-                f"등급 {document['required_clearance']} | {document['content']}"
+                f"[{document['task_id']}] {document['title']} | "
+                f"역할 {document['assigned_role']} | 상태 {document['status']} | "
+                f"설명 {document['description']} | payload {document['payload']}"
             )
         context = "\n".join(context_lines)
 
@@ -147,7 +150,11 @@ class IntentClassifier:
             "근거 문서:",
         ]
         for document in documents:
-            lines.append(f"- [{document['id']}] {document['title']}: {document['content']}")
+            lines.append(
+                f"- [{document['task_id']}] {document['title']} "
+                f"(role={document['assigned_role']}, status={document['status']}): "
+                f"{document['description']} | payload={document['payload']}"
+            )
         return "\n".join(lines)
 
     def _extract_query(self, text: str) -> str:
