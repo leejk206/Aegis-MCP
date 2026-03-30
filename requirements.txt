@@ -3,3 +3,6 @@ uvicorn
 python-dotenv
 slack-sdk
 pydantic
+sqlalchemy
+pytest
+httpx
