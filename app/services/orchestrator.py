@@ -5,10 +5,10 @@ import re
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.document import Document
 from app.services.dp_filter import DPFilter
 from app.services.intent_classifier import ContextDocument, IntentClassifier, IntentType
 from app.services.mac_service import MACService
+from app.models.task import Task
 
 
 class AegisOrchestrator:
@@ -58,7 +58,7 @@ class AegisOrchestrator:
         print(f"[SEARCH] Query: '{query}' by User: {user_id}", flush=True)
 
         user_clearance = self.mac_service.get_user_clearance(user_id, db)
-        accessible_documents = self.mac_service.get_accessible_documents(user_id, db)
+        accessible_tasks = self.mac_service.get_accessible_tasks(user_id, db)
 
         if not query:
             return (
@@ -67,21 +67,21 @@ class AegisOrchestrator:
             )
 
         lowered_query = query.lower()
-        results = self._search_documents(accessible_documents, lowered_query)
+        results = self._search_tasks(accessible_tasks, lowered_query)
 
         if not results:
             return (
                 f"사용자 등급: {user_clearance}\n"
-                f"접근 가능한 문서({len(accessible_documents)}건)에서 "
+                f"접근 가능한 작업({len(accessible_tasks)}건)에서 "
                 f"'{query}' 검색 결과가 없습니다."
             )
 
-        print(f"[RAG] Building context from {len(results)} documents.", flush=True)
+        print(f"[RAG] Building context from {len(results)} tasks.", flush=True)
         rag_answer = self.intent_classifier.answer_with_context(
             question=question,
-            documents=[self._document_to_mock(document) for document in results],
+            documents=[self._task_to_context(task) for task in results],
         )
-        print(f"[RESULT] Found {len(results)} docs | Masking applied.", flush=True)
+        print(f"[RESULT] Found {len(results)} tasks | Masking applied.", flush=True)
         return f"사용자 등급: {user_clearance}\nRAG 답변:\n{rag_answer}"
 
     def _handle_security_query(self, user_id: str, db: Session) -> str:
@@ -98,28 +98,28 @@ class AegisOrchestrator:
             f"입력 메시지: {raw_text}"
         )
 
-    def _search_documents(
+    def _search_tasks(
         self,
-        accessible_documents: list[Document],
+        accessible_tasks: list[Task],
         lowered_query: str,
-    ) -> list[Document]:
+    ) -> list[Task]:
         query_tokens = self._query_tokens(lowered_query)
         if not query_tokens:
             query_tokens = [lowered_query]
 
         return [
-            document
-            for document in accessible_documents
-            if self._matches_document(document, lowered_query, query_tokens)
+            task
+            for task in accessible_tasks
+            if self._matches_task(task, lowered_query, query_tokens)
         ]
 
-    def _matches_document(
+    def _matches_task(
         self,
-        document: Document,
+        task: Task,
         lowered_query: str,
         query_tokens: list[str],
     ) -> bool:
-        searchable_text = f"{document.title} {document.content}".lower()
+        searchable_text = f"{task.title} {task.description} {task.payload or ''}".lower()
         if lowered_query in searchable_text:
             return True
         return any(token in searchable_text for token in query_tokens)
@@ -137,10 +137,12 @@ class AegisOrchestrator:
         masked_text = self.dp_filter.mask_pii(masked_text)
         return masked_text
 
-    def _document_to_mock(self, document: Document) -> ContextDocument:
+    def _task_to_context(self, task: Task) -> ContextDocument:
         return {
-            "id": document.document_id,
-            "title": document.title,
-            "content": document.content,
-            "required_clearance": document.required_clearance,
+            "task_id": task.task_id,
+            "title": task.title,
+            "description": task.description,
+            "assigned_role": task.assigned_role,
+            "status": task.status,
+            "payload": task.payload,
         }

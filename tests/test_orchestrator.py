@@ -8,7 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.core import database
 from app.core.database import Base
-from app.models.document import Document
+from app.models.task import Task
 from app.models.user import User
 from app.services.intent_classifier import IntentClassification, IntentClassifier, IntentType
 from app.services.orchestrator import AegisOrchestrator
@@ -32,23 +32,45 @@ def setup_in_memory_db(monkeypatch: pytest.MonkeyPatch) -> None:
     with testing_session_local() as db:
         db.add_all(
             [
-                User(slack_id="U_LEVEL4", clearance_level=4),
-                User(slack_id="U_LEVEL1", clearance_level=1),
+                User(slack_id="U_BOSS", clearance_level=4),
+                User(slack_id="U_SECRETARY", clearance_level=3),
+                User(slack_id="U_SUPERVISOR", clearance_level=2),
+                User(slack_id="U_WORKER", clearance_level=1),
             ]
         )
         db.add_all(
             [
-                Document(
-                    document_id="DOC-004",
-                    title="ProjectX 마스터 플랜",
-                    content="ProjectX 핵심 로드맵 및 외부 공유 금지 항목",
-                    required_clearance=4,
+                Task(
+                    task_id="T-001",
+                    title="스마트 컨트랙트 개발 총괄",
+                    description="신규 ERC20 토큰 컨트랙트 개발 및 보안 감사 진행",
+                    assigned_role="SUPERVISOR",
+                    status="IN_PROGRESS",
+                    payload=None,
                 ),
-                Document(
-                    document_id="DOC-001",
-                    title="사내 공지",
-                    content="일반 공지 사항",
-                    required_clearance=1,
+                Task(
+                    task_id="T-002",
+                    title="ERC20 기본 컨트랙트 구현",
+                    description="OpenZeppelin을 활용한 기본 코드 작성",
+                    assigned_role="WORKER",
+                    status="COMPLETED",
+                    payload="pragma solidity ^0.8.0;\nimport '@openzeppelin/contracts/token/ERC20/ERC20.sol';\ncontract AegisToken is ERC20 { ... }",
+                ),
+                Task(
+                    task_id="T-003",
+                    title="Reentrancy 취약점 분석",
+                    description="T-002 코드의 재진입 공격 취약점 점검",
+                    assigned_role="WORKER",
+                    status="REVIEW",
+                    payload="분석 결과 특이사항 없음. 검토 요망.",
+                ),
+                Task(
+                    task_id="T-004",
+                    title="최종 보안 보고서 작성",
+                    description="개발 및 감사 완료 후 Boss에게 보고할 최종 요약본 작성",
+                    assigned_role="SECRETARY",
+                    status="PENDING",
+                    payload=None,
                 ),
             ]
         )
@@ -59,41 +81,53 @@ def setup_in_memory_db(monkeypatch: pytest.MonkeyPatch) -> None:
     Base.metadata.drop_all(bind=test_engine)
 
 
-def test_mac_clearance_allow(setup_in_memory_db: None) -> None:
+def test_agent_boss_access(setup_in_memory_db: None) -> None:
     orchestrator = AegisOrchestrator()
+
+    def fake_answer_with_context(question: str, documents: list[dict[str, str | None]]) -> str:
+        lines = [f"질문: {question}", "조회 작업:"]
+        for task in documents:
+            lines.append(
+                f"- [{task['task_id']}] {task['title']} / {task['assigned_role']} / "
+                f"{task['status']} / payload={task['payload']}"
+            )
+        return "\n".join(lines)
+
     with patch.object(
         IntentClassifier,
         "classify",
         return_value=IntentClassification(
             intent=IntentType.DATA_RETRIEVAL,
-            query="ProjectX",
+            query="스마트 컨트랙트",
         ),
     ), patch.object(
         IntentClassifier,
         "answer_with_context",
-        return_value="ProjectX 관련 요약 응답입니다.",
-    ):
-        result = orchestrator.process_slack_message("U_LEVEL4", "검색: ProjectX")
+        side_effect=fake_answer_with_context,
+    ) as mocked_answer:
+        result = orchestrator.process_slack_message("U_BOSS", "검색: 스마트 컨트랙트")
 
     assert "RAG 답변" in result
-    assert "[MASKED_CONFIDENTIAL]" in result
+    assert "pragma solidity ^0.8.0;" in result
+    assert "[T-002]" in result
+    mocked_answer.assert_called_once()
 
 
-def test_mac_clearance_deny(setup_in_memory_db: None) -> None:
+def test_agent_worker_access(setup_in_memory_db: None) -> None:
     orchestrator = AegisOrchestrator()
     with patch.object(
         IntentClassifier,
         "classify",
         return_value=IntentClassification(
             intent=IntentType.DATA_RETRIEVAL,
-            query="ProjectX",
+            query="최종 보안 보고서",
         ),
     ), patch.object(
         IntentClassifier,
         "answer_with_context",
         return_value="이 값은 호출되면 안 됩니다.",
     ) as mocked_answer:
-        result = orchestrator.process_slack_message("U_LEVEL1", "검색: ProjectX")
+        result = orchestrator.process_slack_message("U_WORKER", "검색: 최종 보안 보고서")
 
     assert "검색 결과가 없습니다." in result
     assert "RAG 답변" not in result

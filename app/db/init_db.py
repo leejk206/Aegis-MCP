@@ -3,41 +3,48 @@ from __future__ import annotations
 from sqlalchemy import select
 
 from app.core.database import Base, SessionLocal, engine
-from app.models.document import Document
+from app.models.task import Task
 from app.models.user import User
 
-MOCK_USERS: dict[str, int] = {
-    "U_LJK91": 4,
-    "U_ANALYST_1": 1,
-    "U_ANALYST_2": 2,
-    "U_MANAGER_1": 3,
-    "U0APFDRJ4UD": 4,
-}
+MOCK_USERS: list[dict[str, str | int]] = [
+    {"slack_id": "U_BOSS", "clearance_level": 4},
+    {"slack_id": "U_SECRETARY", "clearance_level": 3},
+    {"slack_id": "U_SUPERVISOR", "clearance_level": 2},
+    {"slack_id": "U_WORKER", "clearance_level": 1},
+]
 
-MOCK_DOCUMENTS: list[dict[str, str | int]] = [
+MOCK_TASKS: list[dict[str, str | None]] = [
     {
-        "id": "DOC-001",
-        "title": "사내 공지",
-        "content": "일반 공지 사항 및 근무 일정 안내",
-        "required_clearance": 1,
+        "task_id": "T-001",
+        "title": "스마트 컨트랙트 개발 총괄",
+        "description": "신규 ERC20 토큰 컨트랙트 개발 및 보안 감사 진행",
+        "assigned_role": "SUPERVISOR",
+        "status": "IN_PROGRESS",
+        "payload": None,
     },
     {
-        "id": "DOC-002",
-        "title": "내부감사 일정",
-        "content": "내부감사 준비 회의는 4월 2일 14:00 진행",
-        "required_clearance": 2,
+        "task_id": "T-002",
+        "title": "ERC20 기본 컨트랙트 구현",
+        "description": "OpenZeppelin을 활용한 기본 코드 작성",
+        "assigned_role": "WORKER",
+        "status": "COMPLETED",
+        "payload": "pragma solidity ^0.8.0;\nimport '@openzeppelin/contracts/token/ERC20/ERC20.sol';\ncontract AegisToken is ERC20 { ... }",
     },
     {
-        "id": "DOC-003",
-        "title": "Q3매출 분석",
-        "content": "Q3매출 잠정 수치와 지역별 원인 분석",
-        "required_clearance": 3,
+        "task_id": "T-003",
+        "title": "Reentrancy 취약점 분석",
+        "description": "T-002 코드의 재진입 공격 취약점 점검",
+        "assigned_role": "WORKER",
+        "status": "REVIEW",
+        "payload": "분석 결과 특이사항 없음. 검토 요망.",
     },
     {
-        "id": "DOC-004",
-        "title": "ProjectX 마스터 플랜",
-        "content": "ProjectX 핵심 로드맵 및 외부 공유 금지 항목",
-        "required_clearance": 4,
+        "task_id": "T-004",
+        "title": "최종 보안 보고서 작성",
+        "description": "개발 및 감사 완료 후 Boss에게 보고할 최종 요약본 작성",
+        "assigned_role": "SECRETARY",
+        "status": "PENDING",
+        "payload": None,
     },
 ]
 
@@ -47,26 +54,31 @@ def init_db() -> None:
 
     with SessionLocal() as db:
         users_exist = db.execute(select(User.slack_id).limit(1)).first() is not None
-        documents_exist = db.execute(select(Document.document_id).limit(1)).first() is not None
+        tasks_exist = db.execute(select(Task.task_id).limit(1)).first() is not None
 
         if not users_exist:
             users = [
-                User(slack_id=slack_id, clearance_level=clearance_level)
-                for slack_id, clearance_level in MOCK_USERS.items()
+                User(
+                    slack_id=str(user["slack_id"]),
+                    clearance_level=int(user["clearance_level"]),
+                )
+                for user in MOCK_USERS
             ]
             db.add_all(users)
 
-        if not documents_exist:
-            documents = [
-                Document(
-                    document_id=document["id"],
-                    title=document["title"],
-                    content=document["content"],
-                    required_clearance=document["required_clearance"],
+        if not tasks_exist:
+            tasks = [
+                Task(
+                    task_id=str(task["task_id"]),
+                    title=str(task["title"]),
+                    description=str(task["description"]),
+                    assigned_role=str(task["assigned_role"]),
+                    status=str(task["status"]),
+                    payload=task["payload"],
                 )
-                for document in MOCK_DOCUMENTS
+                for task in MOCK_TASKS
             ]
-            db.add_all(documents)
+            db.add_all(tasks)
 
-        if not users_exist or not documents_exist:
+        if not users_exist or not tasks_exist:
             db.commit()
