@@ -30,4 +30,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run tests
+        env:
+          SLACK_BOT_TOKEN: "ci-dummy-slack-bot-token"
+          SLACK_SIGNING_SECRET: "ci-dummy-signing-secret"
+          APP_PORT: "8000"
+          OPENAI_API_KEY: ""
+          OPENAI_MODEL: "gpt-4o-mini"
         run: pytest tests/ -v
