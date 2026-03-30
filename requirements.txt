@@ -1,8 +1,9 @@
-fastapi
-uvicorn
-python-dotenv
-slack-sdk
-pydantic
-sqlalchemy
-pytest
-httpx
+fastapi==0.135.2
+uvicorn==0.42.0
+python-dotenv==1.2.2
+slack-sdk==3.41.0
+pydantic==2.12.5
+sqlalchemy==2.0.48
+pytest==9.0.2
+httpx==0.28.1
+openai==2.30.0
