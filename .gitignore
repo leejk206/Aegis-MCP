@@ -56,3 +56,6 @@ app/services/__pycache__/__init__.cpython-310.pyc
 app/services/__pycache__/slack_events.cpython-310.pyc
 app/services/__pycache__/slack_security.cpython-310.pyc
 app/api/__pycache__/endpoints.cpython-310.pyc
+
+# --- Worktrees ---
+.worktrees/
