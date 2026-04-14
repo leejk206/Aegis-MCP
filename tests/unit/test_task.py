@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -11,7 +11,6 @@ from aegis.core.task import (
     TaskStatus,
     next_task_id,
     parse_task,
-    serialize_task,
     slugify,
     task_filename,
     write_task,
@@ -27,7 +26,7 @@ def sample_task() -> Task:
             status=TaskStatus.BACKLOG,
             priority=Priority.P1,
             budget=TaskBudget(usd=2.00, minutes=30),
-            created=datetime(2026, 4, 14, 23, 10, 0, tzinfo=timezone.utc),
+            created=datetime(2026, 4, 14, 23, 10, 0, tzinfo=UTC),
             tags=["api", "security"],
         ),
         body=(
@@ -85,7 +84,8 @@ def test_next_task_id_empty_dir(tmp_path: Path) -> None:
 def test_next_task_id_finds_max_across_directories(tmp_path: Path) -> None:
     for sub in ["backlog", "in-progress", "done"]:
         (tmp_path / sub).mkdir()
-    (tmp_path / "backlog" / "005-new.md").write_text("---\nid: '005'\ntitle: x\ncreated: 2026-04-14T00:00:00+00:00\n---\n")
-    (tmp_path / "in-progress" / "012-active.md").write_text("---\nid: '012'\ntitle: x\ncreated: 2026-04-14T00:00:00+00:00\n---\n")
-    (tmp_path / "done" / "009-finished.md").write_text("---\nid: '009'\ntitle: x\ncreated: 2026-04-14T00:00:00+00:00\n---\n")
+    stub = "---\nid: '{tid}'\ntitle: x\ncreated: 2026-04-14T00:00:00+00:00\n---\n"
+    (tmp_path / "backlog" / "005-new.md").write_text(stub.format(tid="005"))
+    (tmp_path / "in-progress" / "012-active.md").write_text(stub.format(tid="012"))
+    (tmp_path / "done" / "009-finished.md").write_text(stub.format(tid="009"))
     assert next_task_id(tmp_path) == "013"

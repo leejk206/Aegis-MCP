@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from aegis.core.config import (
-    AegisConfig,
     default_config,
     dump_config,
     load_config,
@@ -89,5 +89,5 @@ gates:
 """,
         encoding="utf-8",
     )
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         load_config(path)

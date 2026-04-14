@@ -7,9 +7,9 @@ from time import monotonic
 # Anthropic adjusts pricing. Keys match .aegis/config.yaml llm.models
 # values.
 MODEL_PRICES: dict[str, dict[str, float]] = {
-    "claude-opus-4-6":   {"input": 15.00, "output": 75.00},
-    "claude-sonnet-4-6": {"input":  3.00, "output": 15.00},
-    "claude-haiku-4-5":  {"input":  1.00, "output":  5.00},
+    "claude-opus-4-6": {"input": 15.00, "output": 75.00},
+    "claude-sonnet-4-6": {"input": 3.00, "output": 15.00},
+    "claude-haiku-4-5": {"input": 1.00, "output": 5.00},
 }
 
 
@@ -69,8 +69,7 @@ class BudgetTracker:
         self._tick()
         if self.state.usd_spent >= self.budget.usd_cap:
             return True, (
-                f"USD cap ${self.budget.usd_cap:.2f} exceeded "
-                f"(spent ${self.state.usd_spent:.4f})"
+                f"USD cap ${self.budget.usd_cap:.2f} exceeded (spent ${self.state.usd_spent:.4f})"
             )
         if self.state.seconds_elapsed >= self.budget.seconds_cap:
             return True, (

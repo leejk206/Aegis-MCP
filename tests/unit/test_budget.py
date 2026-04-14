@@ -1,10 +1,10 @@
 import pytest
 
 from aegis.core.budget import (
+    MODEL_PRICES,
     Budget,
     BudgetExhausted,
     BudgetTracker,
-    MODEL_PRICES,
 )
 
 
@@ -15,8 +15,7 @@ def test_record_llm_call_accumulates_cost() -> None:
 
     tracker.record_llm_call("claude-sonnet-4-6", input_tokens=0, output_tokens=1_000_000)
     expected = (
-        MODEL_PRICES["claude-sonnet-4-6"]["input"]
-        + MODEL_PRICES["claude-sonnet-4-6"]["output"]
+        MODEL_PRICES["claude-sonnet-4-6"]["input"] + MODEL_PRICES["claude-sonnet-4-6"]["output"]
     )
     assert tracker.state.usd_spent == pytest.approx(expected)
     assert tracker.state.input_tokens == 1_000_000

@@ -84,9 +84,7 @@ class ReviewerAgentConfig(BaseModel):
 class DocsAgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    paths: list[str] = Field(
-        default_factory=lambda: ["README.md", "CHANGELOG.md", "docs/"]
-    )
+    paths: list[str] = Field(default_factory=lambda: ["README.md", "CHANGELOG.md", "docs/"])
 
 
 class AgentsConfig(BaseModel):

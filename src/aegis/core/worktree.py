@@ -65,7 +65,5 @@ def validate_path_in_scope(path: Path, scope: Path) -> Path:
     try:
         resolved.relative_to(scope_resolved)
     except ValueError as exc:
-        raise ScopeViolation(
-            f"{resolved} is outside scope {scope_resolved}"
-        ) from exc
+        raise ScopeViolation(f"{resolved} is outside scope {scope_resolved}") from exc
     return resolved

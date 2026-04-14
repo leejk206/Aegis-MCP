@@ -9,7 +9,6 @@ from aegis.core.task import (
     write_task,
 )
 
-
 STATUS_DIRS: dict[TaskStatus, str] = {
     TaskStatus.BACKLOG: "backlog",
     TaskStatus.IN_PROGRESS: "in-progress",
@@ -53,9 +52,7 @@ def list_tasks(
 ) -> list[tuple[Task, Path]]:
     """Return all tasks (optionally filtered by status), sorted by id."""
     result: list[tuple[Task, Path]] = []
-    statuses: list[TaskStatus] = (
-        [status] if status is not None else list(TaskStatus)
-    )
+    statuses: list[TaskStatus] = [status] if status is not None else list(TaskStatus)
     for s in statuses:
         d = aegis_dir / STATUS_DIRS[s]
         if not d.exists():

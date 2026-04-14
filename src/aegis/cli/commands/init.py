@@ -42,9 +42,7 @@ def run_init(target: Path, force: bool = False) -> Path:
         raise typer.BadParameter(f"{target} is not a git repository")
     aegis_dir = target / AEGIS_DIRNAME
     if aegis_dir.exists() and not force:
-        raise typer.BadParameter(
-            f"{aegis_dir} already exists. Use --force to overwrite."
-        )
+        raise typer.BadParameter(f"{aegis_dir} already exists. Use --force to overwrite.")
     for sub in STATUS_SUBDIRS:
         (aegis_dir / sub).mkdir(parents=True, exist_ok=True)
     (aegis_dir / ".worktrees").mkdir(exist_ok=True)
