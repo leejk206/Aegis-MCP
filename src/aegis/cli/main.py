@@ -1,0 +1,38 @@
+from __future__ import annotations
+
+import typer
+
+from aegis import __version__
+from aegis.cli.commands.stubs import register_stubs
+
+
+app = typer.Typer(
+    name="aegis",
+    help="Aegis — personal AI engineering team CLI.",
+    no_args_is_help=True,
+)
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"aegis {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def _root(
+    version: bool = typer.Option(
+        False,
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show version and exit.",
+    ),
+) -> None:
+    """Aegis CLI root."""
+
+
+register_stubs(app)
+
+
+# Real commands from Tasks 9-11 will be registered below in later tasks.
