@@ -40,11 +40,16 @@ def run_task_add(
 ) -> Path:
     aegis_dir = _aegis_dir_for(target)
     task_id = next_task_id(aegis_dir)
+    try:
+        priority_enum = Priority(priority)
+    except ValueError as exc:
+        valid = ", ".join(p.value for p in Priority)
+        raise typer.BadParameter(f"priority must be one of: {valid}") from exc
     fm = TaskFrontmatter(
         id=task_id,
         title=title,
         status=TaskStatus.BACKLOG,
-        priority=Priority(priority),
+        priority=priority_enum,
         budget=TaskBudget(usd=budget_usd, minutes=budget_minutes),
         created=datetime.now(tz=UTC),
     )
@@ -61,7 +66,11 @@ def run_task_list(
     status: str | None,
 ) -> list[dict[str, Any]]:
     aegis_dir = _aegis_dir_for(target)
-    status_enum = TaskStatus(status) if status else None
+    try:
+        status_enum = TaskStatus(status) if status else None
+    except ValueError as exc:
+        valid = ", ".join(s.value for s in TaskStatus)
+        raise typer.BadParameter(f"status must be one of: {valid}") from exc
     rows: list[dict[str, Any]] = []
     for task, path in list_tasks(aegis_dir, status=status_enum):
         rows.append(

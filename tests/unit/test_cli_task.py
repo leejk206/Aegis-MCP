@@ -76,3 +76,23 @@ def test_task_show_returns_content(initialized_repo: Path) -> None:
     rendered = run_task_show(initialized_repo, task_id="001")
     assert "answer everything" in rendered
     assert "P0" in rendered
+
+
+def test_task_add_rejects_invalid_priority(initialized_repo: Path) -> None:
+    import typer
+
+    with pytest.raises(typer.BadParameter):
+        run_task_add(
+            initialized_repo,
+            title="x",
+            priority="P9",
+            budget_usd=2.0,
+            budget_minutes=30,
+        )
+
+
+def test_task_list_rejects_invalid_status(initialized_repo: Path) -> None:
+    import typer
+
+    with pytest.raises(typer.BadParameter):
+        run_task_list(initialized_repo, status="nonexistent")

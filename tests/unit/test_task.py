@@ -66,6 +66,9 @@ def test_serialize_and_parse_roundtrip(tmp_path: Path, sample_task: Task) -> Non
     assert loaded.frontmatter.budget.usd == pytest.approx(2.00)
     assert loaded.frontmatter.tags == ["api", "security"]
     assert "Login endpoint" in loaded.body
+    assert loaded.frontmatter.budget.minutes == 30
+    assert loaded.frontmatter.created == sample_task.frontmatter.created
+    assert loaded.frontmatter.started is None
 
 
 def test_serialize_preserves_appended_sections(tmp_path: Path, sample_task: Task) -> None:
