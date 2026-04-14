@@ -36,8 +36,8 @@ register_stubs(app)
 
 from aegis.cli.commands.init import register as register_init  # noqa: E402
 from aegis.cli.commands.task import register as register_task  # noqa: E402
+from aegis.cli.commands.config import register as register_config  # noqa: E402
 
 register_init(app)
 register_task(app)
-
-# Real command from Task 11 will be registered below.
+register_config(app)
