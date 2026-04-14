@@ -50,7 +50,12 @@ def list_tasks(
     aegis_dir: Path,
     status: TaskStatus | None = None,
 ) -> list[tuple[Task, Path]]:
-    """Return all tasks (optionally filtered by status), sorted by id."""
+    """Return all tasks (optionally filtered by status).
+
+    Results are grouped by status in enum definition order, and sorted
+    by filename (id-prefixed) within each group. Callers that need a
+    globally-sorted list must sort the result themselves.
+    """
     result: list[tuple[Task, Path]] = []
     statuses: list[TaskStatus] = [status] if status is not None else list(TaskStatus)
     for s in statuses:

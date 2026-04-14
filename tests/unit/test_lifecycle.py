@@ -83,6 +83,22 @@ def test_list_tasks_all_statuses(aegis_dir: Path) -> None:
     assert set(ids) == {"001", "002", "003"}
 
 
+def test_list_tasks_grouped_by_status_not_globally_sorted(aegis_dir: Path) -> None:
+    # Populate ids out of order across status dirs to demonstrate that
+    # list_tasks groups by status (enum order), not globally by id.
+    write_task(_make_task("003", "c", TaskStatus.BACKLOG), aegis_dir / "backlog" / "003-c.md")
+    write_task(_make_task("001", "a", TaskStatus.DONE), aegis_dir / "done" / "001-a.md")
+    write_task(
+        _make_task("002", "b", TaskStatus.IN_PROGRESS),
+        aegis_dir / "in-progress" / "002-b.md",
+    )
+
+    results = list_tasks(aegis_dir)
+    ids = [t.frontmatter.id for t, _ in results]
+    # Enum order: BACKLOG, IN_PROGRESS, REVIEW, DONE, BLOCKED, REJECTED
+    assert ids == ["003", "002", "001"]
+
+
 def test_list_tasks_filtered_by_status(aegis_dir: Path) -> None:
     write_task(_make_task("001", "a", TaskStatus.BACKLOG), aegis_dir / "backlog" / "001-a.md")
     write_task(
