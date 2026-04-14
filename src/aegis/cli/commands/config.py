@@ -16,9 +16,7 @@ from aegis.core.config import AegisConfig, dump_config, load_config
 def _config_path(target: Path) -> Path:
     p = target / AEGIS_DIRNAME / "config.yaml"
     if not p.exists():
-        raise typer.BadParameter(
-            f"{p} not found. Run `aegis init` first."
-        )
+        raise typer.BadParameter(f"{p} not found. Run `aegis init` first.")
     return p
 
 

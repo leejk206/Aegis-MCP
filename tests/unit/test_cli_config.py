@@ -30,11 +30,13 @@ def test_config_set_model_routing(initialized_repo: Path) -> None:
 
 def test_config_get_unknown_key_raises(initialized_repo: Path) -> None:
     import typer
+
     with pytest.raises(typer.BadParameter):
         run_config_get(initialized_repo, "nope.nope")
 
 
 def test_config_set_rejects_invalid_value(initialized_repo: Path) -> None:
     import typer
+
     with pytest.raises(typer.BadParameter):
         run_config_set(initialized_repo, "gates.strategy", "anarchy")

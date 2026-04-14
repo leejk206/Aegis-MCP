@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -35,7 +35,7 @@ def _make_task(task_id: str, title: str, status: TaskStatus) -> Task:
             status=status,
             priority=Priority.P2,
             budget=TaskBudget(),
-            created=datetime(2026, 4, 14, tzinfo=timezone.utc),
+            created=datetime(2026, 4, 14, tzinfo=UTC),
         ),
         body=f"# {title}\n",
     )
@@ -53,6 +53,7 @@ def test_transition_moves_file_and_updates_status(aegis_dir: Path) -> None:
     assert new_path.parent.name == "in-progress"
 
     from aegis.core.task import parse_task
+
     loaded = parse_task(new_path)
     assert loaded.frontmatter.status == TaskStatus.IN_PROGRESS
 
@@ -71,7 +72,10 @@ def test_transition_creates_target_dir_if_missing(tmp_path: Path) -> None:
 
 def test_list_tasks_all_statuses(aegis_dir: Path) -> None:
     write_task(_make_task("001", "a", TaskStatus.BACKLOG), aegis_dir / "backlog" / "001-a.md")
-    write_task(_make_task("002", "b", TaskStatus.IN_PROGRESS), aegis_dir / "in-progress" / "002-b.md")
+    write_task(
+        _make_task("002", "b", TaskStatus.IN_PROGRESS),
+        aegis_dir / "in-progress" / "002-b.md",
+    )
     write_task(_make_task("003", "c", TaskStatus.DONE), aegis_dir / "done" / "003-c.md")
 
     results = list_tasks(aegis_dir)
@@ -81,7 +85,10 @@ def test_list_tasks_all_statuses(aegis_dir: Path) -> None:
 
 def test_list_tasks_filtered_by_status(aegis_dir: Path) -> None:
     write_task(_make_task("001", "a", TaskStatus.BACKLOG), aegis_dir / "backlog" / "001-a.md")
-    write_task(_make_task("002", "b", TaskStatus.IN_PROGRESS), aegis_dir / "in-progress" / "002-b.md")
+    write_task(
+        _make_task("002", "b", TaskStatus.IN_PROGRESS),
+        aegis_dir / "in-progress" / "002-b.md",
+    )
 
     backlog = list_tasks(aegis_dir, status=TaskStatus.BACKLOG)
     assert len(backlog) == 1
@@ -89,7 +96,10 @@ def test_list_tasks_filtered_by_status(aegis_dir: Path) -> None:
 
 
 def test_find_task_by_id(aegis_dir: Path) -> None:
-    write_task(_make_task("042", "answer", TaskStatus.REVIEW), aegis_dir / "review" / "042-answer.md")
+    write_task(
+        _make_task("042", "answer", TaskStatus.REVIEW),
+        aegis_dir / "review" / "042-answer.md",
+    )
     found = find_task(aegis_dir, "042")
     assert found is not None
     task, path = found

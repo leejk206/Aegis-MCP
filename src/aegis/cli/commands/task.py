@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -26,9 +26,7 @@ from aegis.core.task import (
 def _aegis_dir_for(target: Path) -> Path:
     d = target / AEGIS_DIRNAME
     if not d.exists():
-        raise typer.BadParameter(
-            f"No .aegis/ directory at {target}. Run `aegis init` first."
-        )
+        raise typer.BadParameter(f"No .aegis/ directory at {target}. Run `aegis init` first.")
     return d
 
 
@@ -48,7 +46,7 @@ def run_task_add(
         status=TaskStatus.BACKLOG,
         priority=Priority(priority),
         budget=TaskBudget(usd=budget_usd, minutes=budget_minutes),
-        created=datetime.now(tz=timezone.utc),
+        created=datetime.now(tz=UTC),
     )
     body = f"# {title}\n\n<!-- describe the task here -->\n"
     task = Task(frontmatter=fm, body=body)

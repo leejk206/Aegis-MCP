@@ -3,14 +3,14 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 import frontmatter
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     BACKLOG = "backlog"
     IN_PROGRESS = "in-progress"
     REVIEW = "review"
@@ -19,7 +19,7 @@ class TaskStatus(str, Enum):
     REJECTED = "rejected"
 
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     P0 = "P0"
     P1 = "P1"
     P2 = "P2"
@@ -82,7 +82,7 @@ def parse_task(path: Path) -> Task:
 def serialize_task(task: Task) -> str:
     metadata = task.frontmatter.model_dump(mode="json", exclude_none=False)
     post = frontmatter.Post(content=task.body, **metadata)
-    return frontmatter.dumps(post)
+    return str(frontmatter.dumps(post))
 
 
 def write_task(task: Task, path: Path) -> None:

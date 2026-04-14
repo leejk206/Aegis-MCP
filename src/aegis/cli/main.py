@@ -5,7 +5,6 @@ import typer
 from aegis import __version__
 from aegis.cli.commands.stubs import register_stubs
 
-
 app = typer.Typer(
     name="aegis",
     help="Aegis — personal AI engineering team CLI.",
@@ -34,9 +33,9 @@ def _root(
 
 register_stubs(app)
 
+from aegis.cli.commands.config import register as register_config  # noqa: E402
 from aegis.cli.commands.init import register as register_init  # noqa: E402
 from aegis.cli.commands.task import register as register_task  # noqa: E402
-from aegis.cli.commands.config import register as register_config  # noqa: E402
 
 register_init(app)
 register_task(app)
