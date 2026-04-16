@@ -40,35 +40,37 @@ def test_load_allow_cmds_strips_whitespace(
     assert _load_allow_cmds() == ["pytest", "ruff", "mypy"]
 
 
-def test_shell_exec_runs_allowed_command(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_shell_exec_runs_allowed_command(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ALLOW_CMDS", "python")
     result = shell_exec(
-        tmp_path, "python", ["-c", "print('hi')"], ".",
+        tmp_path,
+        "python",
+        ["-c", "print('hi')"],
+        ".",
     )
     assert result["exit_code"] == 0
     assert "hi" in result["stdout"]
     assert result["stderr"] == ""
 
 
-def test_shell_exec_captures_nonzero_exit(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_shell_exec_captures_nonzero_exit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ALLOW_CMDS", "python")
     result = shell_exec(
-        tmp_path, "python", ["-c", "import sys; sys.exit(7)"], ".",
+        tmp_path,
+        "python",
+        ["-c", "import sys; sys.exit(7)"],
+        ".",
     )
     assert result["exit_code"] == 7
 
 
-def test_shell_exec_captures_stderr(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_shell_exec_captures_stderr(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ALLOW_CMDS", "python")
     result = shell_exec(
-        tmp_path, "python",
-        ["-c", "import sys; sys.stderr.write('oops')"], ".",
+        tmp_path,
+        "python",
+        ["-c", "import sys; sys.stderr.write('oops')"],
+        ".",
     )
     assert "oops" in result["stderr"]
 
@@ -89,9 +91,7 @@ def test_shell_exec_rejects_cwd_outside_scope(
         shell_exec(tmp_path, "python", ["-c", "pass"], "..")
 
 
-def test_shell_exec_rejects_missing_cwd(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_shell_exec_rejects_missing_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ALLOW_CMDS", "python")
     with pytest.raises(FileNotFoundError):
         shell_exec(tmp_path, "python", ["-c", "pass"], "no_such_dir")
@@ -103,7 +103,8 @@ def test_shell_exec_does_not_interpret_shell_metachars(
     """Args with ; and && are passed to the program verbatim, not to a shell."""
     monkeypatch.setenv("ALLOW_CMDS", "python")
     result = shell_exec(
-        tmp_path, "python",
+        tmp_path,
+        "python",
         ["-c", "import sys; print(sys.argv[1])", "foo; rm -rf /"],
         ".",
     )

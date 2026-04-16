@@ -18,7 +18,6 @@ from mcp.server.fastmcp import FastMCP
 
 from aegis.mcp_servers._base import parse_scope_from_args, resolve_in_scope
 
-
 DEFAULT_ALLOW_CMDS: list[str] = [
     "pytest",
     "python",
@@ -49,20 +48,14 @@ def _load_allow_cmds() -> list[str]:
     return [c.strip() for c in env.split(",") if c.strip()]
 
 
-def shell_exec(
-    scope: Path, command: str, args: list[str], cwd: str
-) -> ShellResult:
+def shell_exec(scope: Path, command: str, args: list[str], cwd: str) -> ShellResult:
     """Run ``command args`` under ``cwd`` (scoped) and capture output."""
     allow = _load_allow_cmds()
     if command not in allow:
-        raise ShellCommandDenied(
-            f"command {command!r} not in ALLOW_CMDS {allow}"
-        )
+        raise ShellCommandDenied(f"command {command!r} not in ALLOW_CMDS {allow}")
     cwd_resolved = resolve_in_scope(scope, cwd)
     if not cwd_resolved.is_dir():
-        raise FileNotFoundError(
-            f"cwd {cwd_resolved} does not exist or is not a directory"
-        )
+        raise FileNotFoundError(f"cwd {cwd_resolved} does not exist or is not a directory")
     result = subprocess.run(
         [command, *args],
         cwd=str(cwd_resolved),

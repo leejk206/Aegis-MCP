@@ -35,10 +35,7 @@ def fs_glob(scope: Path, pattern: str) -> list[str]:
     pattern itself because ``Path.glob`` anchors to the path it is called
     on. This is defense in depth on top of ``resolve_in_scope``.
     """
-    return sorted(
-        str(p.relative_to(scope))
-        for p in scope.glob(pattern)
-    )
+    return sorted(str(p.relative_to(scope)) for p in scope.glob(pattern))
 
 
 def fs_write(scope: Path, path: str, content: str) -> int:
