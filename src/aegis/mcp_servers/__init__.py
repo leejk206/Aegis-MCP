@@ -1,1 +1,5 @@
-"""First-party MCP servers: git, fs, shell, project-index. Implemented in Phase 2."""
+"""First-party MCP servers: git, fs, shell, project-index.
+
+Each server exposes tools over stdio transport and is path-scoped via a
+``--scope`` command-line argument. See spec §10 for the tool inventory.
+"""
