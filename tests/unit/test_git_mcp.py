@@ -94,3 +94,65 @@ def test_build_server_does_not_raise(tmp_path: Path) -> None:
     _init_repo_with_commit(tmp_path)
     server = build_server(tmp_path)
     assert server is not None
+
+
+from aegis.mcp_servers.git_mcp import (
+    git_add,
+    git_branch_create,
+    git_checkout,
+    git_commit,
+)
+
+
+def test_git_add_stages_file(tmp_path: Path) -> None:
+    _init_repo_with_commit(tmp_path)
+    (tmp_path / "new.txt").write_text("data")
+    git_add(tmp_path, ["new.txt"])
+    status = git_status(tmp_path)
+    assert "A  new.txt" in status
+
+
+def test_git_add_multiple_files(tmp_path: Path) -> None:
+    _init_repo_with_commit(tmp_path)
+    (tmp_path / "x.txt").write_text("1")
+    (tmp_path / "y.txt").write_text("2")
+    git_add(tmp_path, ["x.txt", "y.txt"])
+    status = git_status(tmp_path)
+    assert "x.txt" in status
+    assert "y.txt" in status
+
+
+def test_git_add_rejects_outside_scope(tmp_path: Path) -> None:
+    _init_repo_with_commit(tmp_path)
+    with pytest.raises(ScopeViolation):
+        git_add(tmp_path, ["../escape.txt"])
+
+
+def test_git_commit_creates_commit(tmp_path: Path) -> None:
+    _init_repo_with_commit(tmp_path)
+    (tmp_path / "new.txt").write_text("data")
+    _run(["add", "new.txt"], tmp_path)
+    git_commit(tmp_path, "add new.txt")
+    log = git_log(tmp_path)
+    assert "add new.txt" in log
+
+
+def test_git_branch_create_creates_branch(tmp_path: Path) -> None:
+    _init_repo_with_commit(tmp_path)
+    git_branch_create(tmp_path, "feature/x")
+    result = subprocess.run(
+        ["git", "branch", "--list", "feature/x"],
+        cwd=str(tmp_path), capture_output=True, text=True, check=True,
+    )
+    assert "feature/x" in result.stdout
+
+
+def test_git_checkout_switches_branch(tmp_path: Path) -> None:
+    _init_repo_with_commit(tmp_path)
+    git_branch_create(tmp_path, "other")
+    git_checkout(tmp_path, "other")
+    result = subprocess.run(
+        ["git", "symbolic-ref", "--short", "HEAD"],
+        cwd=str(tmp_path), capture_output=True, text=True, check=True,
+    )
+    assert result.stdout.strip() == "other"
