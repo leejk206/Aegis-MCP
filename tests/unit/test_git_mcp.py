@@ -156,3 +156,59 @@ def test_git_checkout_switches_branch(tmp_path: Path) -> None:
         cwd=str(tmp_path), capture_output=True, text=True, check=True,
     )
     assert result.stdout.strip() == "other"
+
+
+from aegis.mcp_servers.git_mcp import (
+    git_merge,
+    git_worktree_add,
+    git_worktree_remove,
+)
+
+
+def test_git_worktree_add_creates_worktree(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo_with_commit(repo)
+    wt_rel = ".worktrees/feature-1"
+    git_worktree_add(repo, wt_rel, "aegis/feature-1")
+    wt_path = repo / wt_rel
+    assert wt_path.is_dir()
+    assert (wt_path / "a.txt").read_text() == "one\n"
+
+
+def test_git_worktree_remove_cleans_up(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo_with_commit(repo)
+    wt_rel = ".worktrees/feature-2"
+    git_worktree_add(repo, wt_rel, "aegis/feature-2")
+    git_worktree_remove(repo, wt_rel)
+    assert not (repo / wt_rel).exists()
+
+
+def test_git_worktree_add_rejects_outside_scope(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo_with_commit(repo)
+    with pytest.raises(ScopeViolation):
+        git_worktree_add(repo, "../evil-wt", "aegis/evil")
+
+
+def test_git_merge_fast_forward(tmp_path: Path) -> None:
+    _init_repo_with_commit(tmp_path)
+    _run(["checkout", "-q", "-b", "feature"], tmp_path)
+    (tmp_path / "new.txt").write_text("x")
+    _run(["add", "new.txt"], tmp_path)
+    _run(["commit", "-q", "-m", "feat"], tmp_path)
+    _run(["checkout", "-q", "main"], tmp_path)
+    out = git_merge(tmp_path, "feature", "main")
+    assert "feat" in out or "merge" in out.lower() or "fast-forward" in out.lower()
+    assert (tmp_path / "new.txt").exists()
+    log = git_log(tmp_path)
+    assert "feat" in log
+
+
+def test_build_server_with_all_tools_does_not_raise(tmp_path: Path) -> None:
+    _init_repo_with_commit(tmp_path)
+    server = build_server(tmp_path)
+    assert server is not None

@@ -17,6 +17,7 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
+from aegis.core.worktree import create_worktree, remove_worktree
 from aegis.mcp_servers._base import parse_scope_from_args, resolve_in_scope
 
 
@@ -83,6 +84,21 @@ def git_checkout(scope: Path, ref: str) -> None:
     _git(scope, ["checkout", ref])
 
 
+def git_worktree_add(scope: Path, path: str, branch: str) -> None:
+    wt = resolve_in_scope(scope, path)
+    create_worktree(scope, wt, branch)
+
+
+def git_worktree_remove(scope: Path, path: str) -> None:
+    wt = resolve_in_scope(scope, path)
+    remove_worktree(scope, wt)
+
+
+def git_merge(scope: Path, branch: str, into: str) -> str:
+    _git(scope, ["checkout", into])
+    return _git(scope, ["merge", "--no-ff", "--no-edit", branch])
+
+
 def build_server(scope: Path) -> FastMCP:
     """Build a FastMCP server whose tools are bound to ``scope``.
 
@@ -120,6 +136,18 @@ def build_server(scope: Path) -> FastMCP:
     @server.tool(name="git_checkout")
     def _git_checkout(ref: str) -> None:
         git_checkout(scope, ref)
+
+    @server.tool(name="git_worktree_add")
+    def _git_worktree_add(path: str, branch: str) -> None:
+        git_worktree_add(scope, path, branch)
+
+    @server.tool(name="git_worktree_remove")
+    def _git_worktree_remove(path: str) -> None:
+        git_worktree_remove(scope, path)
+
+    @server.tool(name="git_merge")
+    def _git_merge(branch: str, into: str) -> str:
+        return git_merge(scope, branch, into)
 
     return server
 
