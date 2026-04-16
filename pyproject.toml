@@ -15,6 +15,7 @@ dependencies = [
     "python-frontmatter>=1.1",
     "pyyaml>=6.0",
     "typer>=0.12",
+    "mcp>=1.0",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +28,10 @@ dev = [
 
 [project.scripts]
 aegis = "aegis.cli.main:app"
+aegis-git-mcp = "aegis.mcp_servers.git_mcp:main"
+aegis-fs-mcp = "aegis.mcp_servers.fs_mcp:main"
+aegis-shell-mcp = "aegis.mcp_servers.shell_mcp:main"
+aegis-project-index-mcp = "aegis.mcp_servers.project_index_mcp:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aegis"]
