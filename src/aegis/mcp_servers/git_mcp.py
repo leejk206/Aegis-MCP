@@ -66,6 +66,23 @@ def git_log(scope: Path, path: str | None = None, limit: int = 20) -> str:
     return _git(scope, args)
 
 
+def git_add(scope: Path, paths: list[str]) -> None:
+    resolved = [str(resolve_in_scope(scope, p)) for p in paths]
+    _git(scope, ["add", *resolved])
+
+
+def git_commit(scope: Path, message: str) -> str:
+    return _git(scope, ["commit", "-m", message])
+
+
+def git_branch_create(scope: Path, name: str) -> None:
+    _git(scope, ["branch", name])
+
+
+def git_checkout(scope: Path, ref: str) -> None:
+    _git(scope, ["checkout", ref])
+
+
 def build_server(scope: Path) -> FastMCP:
     """Build a FastMCP server whose tools are bound to ``scope``.
 
@@ -87,6 +104,22 @@ def build_server(scope: Path) -> FastMCP:
     @server.tool(name="git_log")
     def _git_log(path: str | None = None, limit: int = 20) -> str:
         return git_log(scope, path, limit)
+
+    @server.tool(name="git_add")
+    def _git_add(paths: list[str]) -> None:
+        git_add(scope, paths)
+
+    @server.tool(name="git_commit")
+    def _git_commit(message: str) -> str:
+        return git_commit(scope, message)
+
+    @server.tool(name="git_branch_create")
+    def _git_branch_create(name: str) -> None:
+        git_branch_create(scope, name)
+
+    @server.tool(name="git_checkout")
+    def _git_checkout(ref: str) -> None:
+        git_checkout(scope, ref)
 
     return server
 
