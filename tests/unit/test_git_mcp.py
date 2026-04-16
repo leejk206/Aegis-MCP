@@ -8,9 +8,16 @@ import pytest
 from aegis.core.worktree import ScopeViolation
 from aegis.mcp_servers.git_mcp import (
     build_server,
+    git_add,
+    git_branch_create,
+    git_checkout,
+    git_commit,
     git_diff,
     git_log,
+    git_merge,
     git_status,
+    git_worktree_add,
+    git_worktree_remove,
 )
 
 
@@ -96,14 +103,6 @@ def test_build_server_does_not_raise(tmp_path: Path) -> None:
     assert server is not None
 
 
-from aegis.mcp_servers.git_mcp import (
-    git_add,
-    git_branch_create,
-    git_checkout,
-    git_commit,
-)
-
-
 def test_git_add_stages_file(tmp_path: Path) -> None:
     _init_repo_with_commit(tmp_path)
     (tmp_path / "new.txt").write_text("data")
@@ -142,7 +141,10 @@ def test_git_branch_create_creates_branch(tmp_path: Path) -> None:
     git_branch_create(tmp_path, "feature/x")
     result = subprocess.run(
         ["git", "branch", "--list", "feature/x"],
-        cwd=str(tmp_path), capture_output=True, text=True, check=True,
+        cwd=str(tmp_path),
+        capture_output=True,
+        text=True,
+        check=True,
     )
     assert "feature/x" in result.stdout
 
@@ -153,16 +155,12 @@ def test_git_checkout_switches_branch(tmp_path: Path) -> None:
     git_checkout(tmp_path, "other")
     result = subprocess.run(
         ["git", "symbolic-ref", "--short", "HEAD"],
-        cwd=str(tmp_path), capture_output=True, text=True, check=True,
+        cwd=str(tmp_path),
+        capture_output=True,
+        text=True,
+        check=True,
     )
     assert result.stdout.strip() == "other"
-
-
-from aegis.mcp_servers.git_mcp import (
-    git_merge,
-    git_worktree_add,
-    git_worktree_remove,
-)
 
 
 def test_git_worktree_add_creates_worktree(tmp_path: Path) -> None:

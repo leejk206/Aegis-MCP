@@ -112,9 +112,7 @@ def build_server(scope: Path) -> FastMCP:
         return git_status(scope, path)
 
     @server.tool(name="git_diff")
-    def _git_diff(
-        path: str | None = None, rev_range: str | None = None
-    ) -> str:
+    def _git_diff(path: str | None = None, rev_range: str | None = None) -> str:
         return git_diff(scope, path, rev_range)
 
     @server.tool(name="git_log")
