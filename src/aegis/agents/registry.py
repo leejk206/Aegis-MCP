@@ -78,11 +78,7 @@ ROLES: dict[RoleName, RoleSpec] = {
         model_key="dev",
         mcp_server_names=("git", "fs", "shell"),
         allowed_tools=(
-            _GIT_READ_TOOLS
-            + _GIT_WRITE_TOOLS
-            + _FS_READ_TOOLS
-            + _FS_WRITE_TOOLS
-            + _SHELL_TOOLS
+            _GIT_READ_TOOLS + _GIT_WRITE_TOOLS + _FS_READ_TOOLS + _FS_WRITE_TOOLS + _SHELL_TOOLS
         ),
         disallowed_tools=(),
     ),
