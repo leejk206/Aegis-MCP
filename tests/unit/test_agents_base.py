@@ -14,6 +14,7 @@ def _make_config() -> AegisConfig:
 
 # ------------------ load_prompt ------------------
 
+
 def test_load_prompt_pm_returns_markdown() -> None:
     text = load_prompt("pm")
     assert text.startswith("# Role: PM")
@@ -47,6 +48,7 @@ def test_load_prompt_override_missing_raises(tmp_path: Path) -> None:
 
 
 # ------------------ build_options ------------------
+
 
 def test_build_options_model_comes_from_config(tmp_path: Path) -> None:
     config = _make_config()

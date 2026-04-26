@@ -12,7 +12,8 @@ accepts.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+
+from claude_agent_sdk.types import McpServerConfig
 
 from aegis.agents.registry import ROLES, RoleName
 
@@ -30,7 +31,7 @@ def build_mcp_servers(
     role: RoleName,
     worktree: Path,
     shell_allow_cmds: str | None = None,
-) -> dict[str, dict[str, Any]]:
+) -> dict[str, McpServerConfig]:
     """Return ``{server_name: {type,command,args,env}}`` for ``role``.
 
     ``worktree`` is passed verbatim as ``--scope`` to every server. It
@@ -50,7 +51,7 @@ def build_mcp_servers(
             f"worktree {worktree_resolved} does not exist; create it before spawning agents"
         )
 
-    servers: dict[str, dict[str, Any]] = {}
+    servers: dict[str, McpServerConfig] = {}
     scope_args = ["--scope", str(worktree_resolved)]
 
     for server_name in spec.mcp_server_names:
