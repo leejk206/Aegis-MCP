@@ -10,17 +10,19 @@ async method, ``run``, drives ``claude_agent_sdk.ClaudeSDKClient`` once
 and returns the full list of messages.
 """
 
-try:
-    from aegis.agents.base import AegisAgent, build_options, load_prompt
-except ImportError:
-    pass  # base.py created in Task 4
+import contextlib
+
+with contextlib.suppress(ImportError):
+    from aegis.agents.base import (  # base.py created in Task 4
+        AegisAgent,
+        build_options,
+        load_prompt,
+    )
 
 from aegis.agents.registry import ROLES, RoleName, RoleSpec
 
-try:
-    from aegis.agents.tools import build_mcp_servers
-except ImportError:
-    pass  # tools.py created in Task 5
+with contextlib.suppress(ImportError):
+    from aegis.agents.tools import build_mcp_servers  # tools.py created in Task 5
 
 __all__ = [
     "AegisAgent",

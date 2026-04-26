@@ -9,6 +9,11 @@ def test_exactly_five_roles() -> None:
     assert set(ROLES.keys()) == {"pm", "dev", "qa", "reviewer", "docs"}
 
 
+def test_roles_values_are_role_spec_instances() -> None:
+    for spec in ROLES.values():
+        assert isinstance(spec, RoleSpec)
+
+
 def test_each_role_has_a_unique_prompt_filename() -> None:
     filenames = [spec.prompt_filename for spec in ROLES.values()]
     assert len(filenames) == len(set(filenames))
@@ -68,7 +73,12 @@ def test_reviewer_allows_every_git_read_tool() -> None:
 
 def test_pm_disallows_fs_writes() -> None:
     spec = ROLES["pm"]
-    for tool in ("mcp__fs__fs_write", "mcp__fs__fs_mkdir", "mcp__fs__fs_delete", "mcp__fs__fs_move"):
+    for tool in (
+        "mcp__fs__fs_write",
+        "mcp__fs__fs_mkdir",
+        "mcp__fs__fs_delete",
+        "mcp__fs__fs_move",
+    ):
         assert tool in spec.disallowed_tools
 
 
@@ -95,13 +105,14 @@ def test_every_allowed_tool_references_an_allowed_server() -> None:
             # tool name shape: mcp__<server>__<tool_name>
             _, server, _ = tool.split("__", 2)
             assert server in spec.mcp_server_names, (
-                f"role {name} allows tool on server {server!r} but that server is not in mcp_server_names"
+                f"role {name} allows tool on server {server!r} but that server is not in"
+                " mcp_server_names"
             )
 
 
 def test_role_spec_is_frozen() -> None:
     spec = ROLES["pm"]
-    with pytest.raises(Exception):  # dataclass frozen → FrozenInstanceError, subclass of AttributeError
+    with pytest.raises(AttributeError):  # dataclass frozen → FrozenInstanceError ⊂ AttributeError
         spec.prompt_filename = "other.md"  # type: ignore[misc]
 
 
