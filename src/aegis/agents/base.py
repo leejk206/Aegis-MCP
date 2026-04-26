@@ -11,7 +11,7 @@ from __future__ import annotations
 import importlib.resources
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any  # noqa: F401 — used in Task 6
+from typing import Any
 
 from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
 
@@ -19,7 +19,7 @@ from aegis.agents.registry import ROLES, RoleName
 from aegis.agents.tools import build_mcp_servers
 from aegis.core.config import AegisConfig
 
-ClientFactory = Callable[[ClaudeAgentOptions], ClaudeSDKClient]  # noqa: F401 — used in Task 6
+ClientFactory = Callable[[ClaudeAgentOptions], ClaudeSDKClient]
 
 __all__ = [
     "AegisAgent",
@@ -72,4 +72,52 @@ def build_options(
 
 
 class AegisAgent:
-    """Placeholder — populated in Task 6."""
+    """One role bound to one worktree, wrapping ``ClaudeSDKClient``.
+
+    The wrapper is intentionally thin: structured post-processing of
+    the message stream (extracting ``done`` / ``block`` signals,
+    updating LangGraph state, etc.) is a Phase-4 graph-node concern.
+    Phase 3 only guarantees "a single role invocation returns its
+    messages".
+    """
+
+    def __init__(
+        self,
+        role: RoleName,
+        worktree: Path,
+        config: AegisConfig,
+        prompt_override: Path | None = None,
+        shell_allow_cmds: str | None = None,
+        client_factory: ClientFactory = ClaudeSDKClient,
+    ) -> None:
+        if role not in ROLES:
+            raise KeyError(f"unknown role {role!r}")
+        worktree_resolved = worktree.resolve()
+        if not worktree_resolved.exists():
+            raise FileNotFoundError(f"worktree {worktree_resolved} does not exist")
+
+        self.role: RoleName = role
+        self.worktree: Path = worktree_resolved
+        self.config: AegisConfig = config
+        self.prompt_override: Path | None = prompt_override
+        self.shell_allow_cmds: str | None = shell_allow_cmds
+        self._client_factory: ClientFactory = client_factory
+
+    def build_options(self) -> ClaudeAgentOptions:
+        return build_options(
+            self.role,
+            self.worktree,
+            self.config,
+            prompt_override=self.prompt_override,
+            shell_allow_cmds=self.shell_allow_cmds,
+        )
+
+    async def run(self, task_prompt: str) -> list[Any]:
+        """Drive the client once with ``task_prompt`` and collect messages."""
+        options = self.build_options()
+        messages: list[Any] = []
+        async with self._client_factory(options) as client:
+            await client.query(task_prompt)
+            async for msg in client.receive_response():
+                messages.append(msg)
+        return messages
