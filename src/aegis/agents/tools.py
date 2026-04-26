@@ -61,7 +61,7 @@ def build_mcp_servers(
         servers[server_name] = {
             "type": "stdio",
             "command": command,
-            "args": scope_args,
+            "args": list(scope_args),
             "env": env,
         }
 

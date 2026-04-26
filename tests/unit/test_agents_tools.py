@@ -30,6 +30,11 @@ def test_build_for_reviewer_returns_git_and_project_index(tmp_path: Path) -> Non
     assert set(servers.keys()) == {"git", "project-index"}
 
 
+def test_build_for_docs_returns_fs_and_git(tmp_path: Path) -> None:
+    servers = build_mcp_servers("docs", tmp_path)
+    assert set(servers.keys()) == {"fs", "git"}
+
+
 def test_each_server_entry_has_stdio_shape(tmp_path: Path) -> None:
     servers = build_mcp_servers("dev", tmp_path)
     for name, entry in servers.items():
@@ -54,6 +59,14 @@ def test_scope_is_resolved_to_absolute(tmp_path: Path, monkeypatch: pytest.Monke
     for entry in servers.values():
         arg = Path(entry["args"][1])
         assert arg.is_absolute()
+
+
+def test_args_lists_are_independent_per_server(tmp_path: Path) -> None:
+    # Mutating one server's args must not affect another's.
+    servers = build_mcp_servers("dev", tmp_path)
+    servers["git"]["args"].append("--injected")
+    assert "--injected" not in servers["fs"]["args"]
+    assert "--injected" not in servers["shell"]["args"]
 
 
 def test_shell_server_gets_allow_cmds_env_when_supplied(tmp_path: Path) -> None:
