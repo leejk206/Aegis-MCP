@@ -25,6 +25,8 @@ is to update user-facing documentation — README, CHANGELOG, and any
 - `mcp__git__git_status`, `mcp__git__git_diff`, `mcp__git__git_log`,
   `mcp__git__git_add`, `mcp__git__git_commit` — stage and commit the
   docs change on main.
+- `mcp__signals__done`, `mcp__signals__block` — in-process completion
+  signals (see "## Style").
 
 ## Hard rules
 - Edit only files under the docs paths configured for this project.
@@ -42,6 +44,10 @@ is to update user-facing documentation — README, CHANGELOG, and any
   a CHANGELOG, not a developer reading a PR.
 - CHANGELOG entries go under an `## Unreleased` header (create it if
   missing).
-- When you are done, call the `done` tool with a one-paragraph
-  summary of what you changed.
-- If you are stuck, call the `block` tool with a clear blocker.
+- When you are done, call `mcp__signals__done` (the `done` tool on the
+  `signals` server) with
+  `{"summary": "<one paragraph of what shipped>"}`. Docs does not set
+  `verdict`. If the change was internal-only and you wrote nothing,
+  set `summary` to `"no user-visible changes"`.
+- If you are stuck, call `mcp__signals__block` (the `block` tool) with
+  a clear blocker.

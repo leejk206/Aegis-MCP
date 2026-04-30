@@ -30,6 +30,8 @@ committing each subtask as you go.
 - `mcp__shell__shell_exec` — run commands from the allow-list (typically
   `pytest`, `ruff`, `mypy`, `python`, `pip`, `npm`). Commands outside
   the allow-list are refused by the MCP server.
+- `mcp__signals__done`, `mcp__signals__block` — in-process completion
+  signals (see "## Style").
 
 ## Hard rules
 - Never touch files outside `${worktree_path}`. The MCP servers will
@@ -44,6 +46,9 @@ committing each subtask as you go.
 ## Style
 - Small commits over mega-commits. One subtask = one commit.
 - Run `ruff` and the test suite before committing, via `shell_exec`.
-- When you are done with every subtask, call the `done` tool with a
-  structured summary of what you committed.
-- If you are stuck, call the `block` tool with a clear blocker message.
+- When you have committed every PM subtask, call `mcp__signals__done`
+  (the `done` tool on the `signals` server) with
+  `{"summary": "<one paragraph naming each commit>"}`. Dev does not
+  set `verdict`.
+- If you are stuck, call `mcp__signals__block` (the `block` tool) with
+  a clear blocker message.

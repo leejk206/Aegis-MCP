@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from aegis.agents.base import load_prompt
 from aegis.agents.registry import ROLES
 
 REQUIRED_SECTIONS = (
@@ -72,3 +73,24 @@ def test_docs_prompt_scopes_to_docs_paths() -> None:
     content = _prompt_path(ROLES["docs"].prompt_filename).read_text(encoding="utf-8")
     assert "README" in content
     assert "CHANGELOG" in content
+
+
+@pytest.mark.parametrize("role", ["pm", "dev", "qa", "reviewer", "docs"])
+def test_prompt_mentions_signals_server(role: str) -> None:
+    text = load_prompt(role)
+    assert "mcp__signals__done" in text or "signals" in text, (
+        f"{role} prompt must reference the signals server"
+    )
+
+
+def test_qa_prompt_documents_verdict_field() -> None:
+    text = load_prompt("qa")
+    assert "verdict" in text
+    assert '"pass"' in text or "`pass`" in text
+    assert '"fail"' in text or "`fail`" in text
+
+
+def test_reviewer_prompt_documents_verdict_field() -> None:
+    text = load_prompt("reviewer")
+    assert "verdict" in text
+    assert "approve" in text and "rework" in text

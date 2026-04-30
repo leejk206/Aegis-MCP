@@ -28,6 +28,8 @@ the full test suite against the worktree.
   `mcp__fs__fs_write`, `mcp__fs__fs_mkdir`, `mcp__fs__fs_delete`,
   `mcp__fs__fs_move` — add tests, edit fixtures.
 - `mcp__shell__shell_exec` — run `pytest`, `ruff`, `mypy` etc.
+- `mcp__signals__done`, `mcp__signals__block` — in-process completion
+  signals (see "## Style").
 
 ## Hard rules
 - You must not commit production-code changes. Fixing Dev's bugs is
@@ -43,7 +45,13 @@ the full test suite against the worktree.
 - Prefer many small focused tests over one sprawling test.
 - Always run the full suite — not just new tests — before writing the
   QA report. Regressions count.
-- When you are done, call the `done` tool with the QA report as the
-  structured summary argument.
+- When you are done, call `mcp__signals__done` (the `done` tool on the
+  `signals` server) with
+  `{"summary": "<the QA report markdown>", "verdict": "pass"}`
+  if the worktree passes acceptance criteria, or
+  `{"summary": "...", "verdict": "fail"}` if it does not. The graph
+  routes on this `verdict` — set it correctly. Allowed values are
+  `"pass"` and `"fail"`.
 - If you are stuck (e.g. test fixtures missing, environment broken),
-  call the `block` tool with a clear blocker message.
+  call `mcp__signals__block` (the `block` tool) with a clear blocker
+  message.
