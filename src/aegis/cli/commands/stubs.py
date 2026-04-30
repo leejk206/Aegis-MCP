@@ -33,10 +33,6 @@ def register_stubs(app: typer.Typer) -> None:
 
     app.add_typer(daemon_app, name="daemon")
 
-    @app.command(help="Inspect a task's full trajectory. (Phase 4)")
-    def inspect(task_id: str) -> None:
-        _not_implemented("inspect", "4")
-
     @app.command(help="Tail a task's log. (Phase 5)")
     def logs(task_id: str, follow: bool = typer.Option(False, "--follow")) -> None:
         _not_implemented("logs", "5")
