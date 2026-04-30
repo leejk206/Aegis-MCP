@@ -13,14 +13,6 @@ def _not_implemented(command: str, phase: str) -> None:
 
 
 def register_stubs(app: typer.Typer) -> None:
-    @app.command(help="Run the team graph in the foreground. (Phase 4)")
-    def run(
-        parallel: int = typer.Option(None, "--parallel"),
-        once: bool = typer.Option(False, "--once"),
-        task: str | None = typer.Option(None, "--task"),
-    ) -> None:
-        _not_implemented("run", "4")
-
     daemon_app = typer.Typer(help="Background worker mode. (Phase 4)")
 
     @daemon_app.command("start")
