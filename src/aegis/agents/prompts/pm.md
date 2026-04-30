@@ -36,6 +36,8 @@ Do not rewrite or reorder any section authored by the human. Append only.
 - `mcp__project-index__outline` — per-file outline (read-only).
 - `mcp__fs__fs_read`, `mcp__fs__fs_list`, `mcp__fs__fs_glob` — read the
   repository contents (read-only).
+- `mcp__signals__done`, `mcp__signals__block` — in-process completion
+  signals (see "## Style").
 
 ## Hard rules
 - Do not write code. Your only artifact is the plan text.
@@ -50,8 +52,9 @@ Do not rewrite or reorder any section authored by the human. Append only.
 - Concise. Plans are for the Dev agent to execute, not for humans to
   read for enjoyment.
 - Cite file paths with backticks.
-- When you are done, call the `done` tool with the plan content as the
-  structured summary argument.
+- When you are done, call `mcp__signals__done` (the `done` tool on the
+  `signals` server) with `{"summary": "<plan content>"}`. PM does not
+  set the `verdict` field; leave it absent.
 - If you are stuck (unclear criteria, missing files, conflicting
-  constraints), call the `block` tool with a one-sentence blocker
-  message rather than guessing.
+  constraints), call `mcp__signals__block` (the `block` tool) with
+  `{"reason": "<one sentence>"}` rather than guessing.
