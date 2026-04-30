@@ -61,6 +61,11 @@ _INDEX_TOOLS = (
     "mcp__project-index__file_tree",
     "mcp__project-index__outline",
 )
+# In-process completion signals. Provided by ``aegis.graph.signals``,
+# merged into every role's ``mcp_servers`` dict by
+# :func:`aegis.agents.tools.build_mcp_servers`. Every role may call
+# both — the graph parser reads the tool_use to drive routing.
+_SIGNALS_TOOLS = ("mcp__signals__done", "mcp__signals__block")
 
 
 ROLES: dict[RoleName, RoleSpec] = {
@@ -69,7 +74,7 @@ ROLES: dict[RoleName, RoleSpec] = {
         prompt_filename="pm.md",
         model_key="pm",
         mcp_server_names=("project-index", "fs"),
-        allowed_tools=_INDEX_TOOLS + _FS_READ_TOOLS,
+        allowed_tools=_INDEX_TOOLS + _FS_READ_TOOLS + _SIGNALS_TOOLS,
         disallowed_tools=_FS_WRITE_TOOLS,
     ),
     "dev": RoleSpec(
@@ -78,7 +83,12 @@ ROLES: dict[RoleName, RoleSpec] = {
         model_key="dev",
         mcp_server_names=("git", "fs", "shell"),
         allowed_tools=(
-            _GIT_READ_TOOLS + _GIT_WRITE_TOOLS + _FS_READ_TOOLS + _FS_WRITE_TOOLS + _SHELL_TOOLS
+            _GIT_READ_TOOLS
+            + _GIT_WRITE_TOOLS
+            + _FS_READ_TOOLS
+            + _FS_WRITE_TOOLS
+            + _SHELL_TOOLS
+            + _SIGNALS_TOOLS
         ),
         disallowed_tools=(),
     ),
@@ -90,7 +100,9 @@ ROLES: dict[RoleName, RoleSpec] = {
         # QA may run tests (shell), read code (git/fs read), and write
         # test files (fs write). It must NOT commit or push — Dev is the
         # only role that merges its own work into the worktree branch.
-        allowed_tools=_GIT_READ_TOOLS + _FS_READ_TOOLS + _FS_WRITE_TOOLS + _SHELL_TOOLS,
+        allowed_tools=(
+            _GIT_READ_TOOLS + _FS_READ_TOOLS + _FS_WRITE_TOOLS + _SHELL_TOOLS + _SIGNALS_TOOLS
+        ),
         disallowed_tools=_GIT_WRITE_TOOLS,
     ),
     "reviewer": RoleSpec(
@@ -98,7 +110,7 @@ ROLES: dict[RoleName, RoleSpec] = {
         prompt_filename="reviewer.md",
         model_key="reviewer",
         mcp_server_names=("git", "project-index"),
-        allowed_tools=_GIT_READ_TOOLS + _INDEX_TOOLS,
+        allowed_tools=_GIT_READ_TOOLS + _INDEX_TOOLS + _SIGNALS_TOOLS,
         disallowed_tools=_GIT_WRITE_TOOLS,
     ),
     "docs": RoleSpec(
@@ -108,10 +120,13 @@ ROLES: dict[RoleName, RoleSpec] = {
         mcp_server_names=("fs", "git"),
         # Docs writes README/CHANGELOG (fs_write) and commits them (git_add, git_commit).
         # It must NOT create branches, checkout, merge, or touch worktrees.
-        allowed_tools=_FS_READ_TOOLS
-        + _FS_WRITE_TOOLS
-        + _GIT_READ_TOOLS
-        + ("mcp__git__git_add", "mcp__git__git_commit"),
+        allowed_tools=(
+            _FS_READ_TOOLS
+            + _FS_WRITE_TOOLS
+            + _GIT_READ_TOOLS
+            + ("mcp__git__git_add", "mcp__git__git_commit")
+            + _SIGNALS_TOOLS
+        ),
         disallowed_tools=(
             "mcp__git__git_branch_create",
             "mcp__git__git_checkout",

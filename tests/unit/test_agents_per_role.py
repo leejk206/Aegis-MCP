@@ -32,8 +32,9 @@ def test_build_options_is_stable_per_role(
         f"# Role: {role_label}"
     ) or options.system_prompt.startswith("# Role:")  # case-insensitive fallback
 
-    # MCP servers match the registry.
-    assert tuple(options.mcp_servers.keys()) == spec.mcp_server_names
+    # MCP servers match the registry, plus the universal in-process
+    # ``signals`` server merged in by ``build_mcp_servers``.
+    assert tuple(options.mcp_servers.keys()) == (*spec.mcp_server_names, "signals")
 
     # Allow/deny lists match the registry.
     assert tuple(options.allowed_tools) == spec.allowed_tools

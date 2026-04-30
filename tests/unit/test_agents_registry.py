@@ -100,10 +100,16 @@ def test_allowed_and_disallowed_sets_are_disjoint() -> None:
 
 
 def test_every_allowed_tool_references_an_allowed_server() -> None:
+    # ``signals`` is the universal in-process MCP server that every role
+    # is granted by ``aegis.agents.tools.build_mcp_servers``. It is NOT
+    # listed in each role's ``mcp_server_names`` (which only enumerates
+    # stdio Phase-2 servers). Treat it as an implicit member.
     for name, spec in ROLES.items():
         for tool in spec.allowed_tools:
             # tool name shape: mcp__<server>__<tool_name>
             _, server, _ = tool.split("__", 2)
+            if server == "signals":
+                continue
             assert server in spec.mcp_server_names, (
                 f"role {name} allows tool on server {server!r} but that server is not in"
                 " mcp_server_names"
@@ -123,3 +129,9 @@ def test_get_role_spec_returns_by_name() -> None:
 def test_get_role_spec_rejects_unknown() -> None:
     with pytest.raises(KeyError):
         get_role_spec("architect")  # type: ignore[arg-type]
+
+
+def test_every_role_allows_signals_tools() -> None:
+    for role, spec in ROLES.items():
+        assert "mcp__signals__done" in spec.allowed_tools, role
+        assert "mcp__signals__block" in spec.allowed_tools, role

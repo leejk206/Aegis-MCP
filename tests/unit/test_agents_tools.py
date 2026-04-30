@@ -17,27 +17,34 @@ def test_server_commands_cover_all_four_phase2_servers() -> None:
 
 def test_build_for_pm_returns_project_index_and_fs(tmp_path: Path) -> None:
     servers = build_mcp_servers("pm", tmp_path)
-    assert set(servers.keys()) == {"project-index", "fs"}
+    # ``signals`` is the universal in-process server merged in by
+    # ``build_mcp_servers``. The role-specific stdio servers are
+    # ``project-index`` and ``fs``.
+    assert set(servers.keys()) == {"project-index", "fs", "signals"}
 
 
 def test_build_for_dev_returns_git_fs_shell(tmp_path: Path) -> None:
     servers = build_mcp_servers("dev", tmp_path)
-    assert set(servers.keys()) == {"git", "fs", "shell"}
+    assert set(servers.keys()) == {"git", "fs", "shell", "signals"}
 
 
 def test_build_for_reviewer_returns_git_and_project_index(tmp_path: Path) -> None:
     servers = build_mcp_servers("reviewer", tmp_path)
-    assert set(servers.keys()) == {"git", "project-index"}
+    assert set(servers.keys()) == {"git", "project-index", "signals"}
 
 
 def test_build_for_docs_returns_fs_and_git(tmp_path: Path) -> None:
     servers = build_mcp_servers("docs", tmp_path)
-    assert set(servers.keys()) == {"fs", "git"}
+    assert set(servers.keys()) == {"fs", "git", "signals"}
 
 
 def test_each_server_entry_has_stdio_shape(tmp_path: Path) -> None:
     servers = build_mcp_servers("dev", tmp_path)
     for name, entry in servers.items():
+        if name == "signals":
+            # ``signals`` is the in-process SDK server, not stdio.
+            assert entry["type"] == "sdk"
+            continue
         assert entry["type"] == "stdio", f"{name} missing type=stdio"
         assert isinstance(entry["command"], str)
         assert isinstance(entry["args"], list)
@@ -47,7 +54,9 @@ def test_each_server_entry_has_stdio_shape(tmp_path: Path) -> None:
 
 def test_scope_arg_is_the_worktree(tmp_path: Path) -> None:
     servers = build_mcp_servers("dev", tmp_path)
-    for entry in servers.values():
+    for name, entry in servers.items():
+        if name == "signals":
+            continue
         assert entry["args"] == ["--scope", str(tmp_path)]
 
 
@@ -56,7 +65,9 @@ def test_scope_is_resolved_to_absolute(tmp_path: Path, monkeypatch: pytest.Monke
     # A relative path is a programming error but the helper must still
     # resolve it to absolute rather than silently passing garbage.
     servers = build_mcp_servers("dev", Path("."))
-    for entry in servers.values():
+    for name, entry in servers.items():
+        if name == "signals":
+            continue
         arg = Path(entry["args"][1])
         assert arg.is_absolute()
 
@@ -100,3 +111,11 @@ def test_missing_worktree_raises(tmp_path: Path) -> None:
     missing = tmp_path / "does-not-exist"
     with pytest.raises(FileNotFoundError):
         build_mcp_servers("dev", missing)
+
+
+def test_build_mcp_servers_always_includes_signals(tmp_path: Path) -> None:
+    servers = build_mcp_servers("reviewer", tmp_path)
+    assert "signals" in servers
+    assert servers["signals"]["type"] == "sdk"
+    # And the registry-driven stdio entries are still there
+    assert "git" in servers

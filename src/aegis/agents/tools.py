@@ -16,6 +16,7 @@ from pathlib import Path
 from claude_agent_sdk.types import McpServerConfig
 
 from aegis.agents.registry import ROLES, RoleName
+from aegis.graph.signals import build_signals_server
 
 # Phase-2 console-script names, keyed by the short MCP server name used
 # in AegisConfig.mcp.servers and in RoleSpec.mcp_server_names.
@@ -65,5 +66,11 @@ def build_mcp_servers(
             "args": list(scope_args),
             "env": env,
         }
+
+    # Every role gets a fresh in-process ``signals`` server so it can
+    # call ``mcp__signals__done`` / ``mcp__signals__block``. The graph
+    # layer (Phase 4) reads those tool-use messages to drive routing.
+    signals_name, signals_config = build_signals_server()
+    servers[signals_name] = signals_config
 
     return servers
