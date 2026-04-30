@@ -34,9 +34,7 @@ def _state(tmp_path: Path) -> dict[str, Any]:
     )
     task = Task(frontmatter=fm, body="# demo\n")
     write_task(task, p)
-    s = initial_state(
-        task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path
-    )
+    s = initial_state(task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path)
     s["pr_branch"] = "aegis/001-demo"
     return s
 

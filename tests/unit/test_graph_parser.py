@@ -28,9 +28,7 @@ def _tool_use(name: str, args: dict[str, Any], server: str = "signals") -> _Tool
 
 
 def test_extract_done_with_verdict() -> None:
-    msgs = [
-        _Assistant(content=[_tool_use("done", {"summary": "ok", "verdict": "pass"})])
-    ]
+    msgs = [_Assistant(content=[_tool_use("done", {"summary": "ok", "verdict": "pass"})])]
     sig = extract_signal(msgs)
     assert isinstance(sig, Done)
     assert sig.summary == "ok"
@@ -38,9 +36,7 @@ def test_extract_done_with_verdict() -> None:
 
 
 def test_extract_block_reason() -> None:
-    msgs = [
-        _Assistant(content=[_tool_use("block", {"reason": "fixtures missing"})])
-    ]
+    msgs = [_Assistant(content=[_tool_use("block", {"reason": "fixtures missing"})])]
     sig = extract_signal(msgs)
     assert isinstance(sig, Block)
     assert sig.reason == "fixtures missing"
@@ -64,12 +60,8 @@ def test_extract_uses_last_signal_when_multiple() -> None:
 
 def test_extract_ignores_unrelated_tool_use() -> None:
     msgs = [
-        _Assistant(
-            content=[_tool_use("git_status", {}, server="git")]
-        ),
-        _Assistant(
-            content=[_tool_use("done", {"summary": "real"}, server="signals")]
-        ),
+        _Assistant(content=[_tool_use("git_status", {}, server="git")]),
+        _Assistant(content=[_tool_use("done", {"summary": "real"}, server="signals")]),
     ]
     sig = extract_signal(msgs)
     assert isinstance(sig, Done)

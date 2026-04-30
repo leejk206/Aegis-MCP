@@ -33,9 +33,7 @@ def _state(tmp_path: Path) -> dict[str, Any]:
     )
     task = Task(frontmatter=fm, body="# demo\n")
     write_task(task, p)
-    return initial_state(
-        task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path
-    )
+    return initial_state(task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path)
 
 
 class _StubAgent:
@@ -61,8 +59,6 @@ def test_docs_done(tmp_path: Path) -> None:
             ],
         }
     ]
-    delta = asyncio.run(
-        docs_node(s, config=cfg, agent_factory=lambda st, c: _StubAgent(msgs))
-    )
+    delta = asyncio.run(docs_node(s, config=cfg, agent_factory=lambda st, c: _StubAgent(msgs)))
     assert delta["current_node"] == "docs"
     assert delta["implementation_status"] == "done"

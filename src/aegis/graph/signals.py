@@ -40,10 +40,7 @@ async def _done(args: dict[str, Any]) -> dict[str, Any]:
 
 @tool(
     "block",
-    (
-        "Signal that the role cannot continue. reason is a one-sentence "
-        "human-readable blocker."
-    ),
+    ("Signal that the role cannot continue. reason is a one-sentence human-readable blocker."),
     {"reason": str},
 )
 async def _block(args: dict[str, Any]) -> dict[str, Any]:

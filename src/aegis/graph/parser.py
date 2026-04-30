@@ -13,6 +13,7 @@ A "signals" tool-use is one of:
 The **last** matching tool-use wins. If no tool-use is present, returns
 ``NoSignal()``.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -71,10 +72,7 @@ def _tool_use_fields(block: Any) -> tuple[str, dict[str, Any], str | None] | Non
     name = getattr(block, "name", None)
     if name is None:
         return None
-    if (
-        getattr(block, "type", None) is not None
-        and getattr(block, "type", None) != "tool_use"
-    ):
+    if getattr(block, "type", None) is not None and getattr(block, "type", None) != "tool_use":
         return None
     args = getattr(block, "input", None) or {}
     if not isinstance(args, dict):
@@ -104,7 +102,9 @@ def extract_signal(messages: list[Any]) -> Signal:
             if _is_signals_tool(name, server, "done"):
                 last_done = Done(
                     summary=str(args.get("summary", "")),
-                    verdict=(str(args["verdict"]) if "verdict" in args and args["verdict"] else None),
+                    verdict=(
+                        str(args["verdict"]) if "verdict" in args and args["verdict"] else None
+                    ),
                     raw=args,
                 )
                 last_was_done = True

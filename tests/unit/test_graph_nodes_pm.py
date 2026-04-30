@@ -35,9 +35,7 @@ def _setup(tmp_path: Path) -> tuple[dict[str, Any], Path, AegisConfig]:
     task = Task(frontmatter=fm, body="# demo\n\n## Why\nbecause.\n")
     write_task(task, p)
     config = AegisConfig(project=ProjectConfig(name="t"))
-    state = initial_state(
-        task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path
-    )
+    state = initial_state(task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path)
     return state, p, config
 
 
@@ -58,9 +56,7 @@ def _done_msgs(summary: str, verdict: str | None = None) -> list[Any]:
     return [
         {
             "type": "assistant",
-            "content": [
-                {"type": "tool_use", "name": "mcp__signals__done", "input": args}
-            ],
+            "content": [{"type": "tool_use", "name": "mcp__signals__done", "input": args}],
         }
     ]
 
@@ -84,9 +80,7 @@ def test_pm_done_appends_plan_and_advances_status(tmp_path: Path) -> None:
     state, task_path, config = _setup(tmp_path)
     stub = _StubAgent(_done_msgs("- step 1\n- step 2\n"))
 
-    delta = asyncio.run(
-        pm_node(state, config=config, agent_factory=lambda s, c: stub)
-    )
+    delta = asyncio.run(pm_node(state, config=config, agent_factory=lambda s, c: stub))
     assert delta["implementation_status"] == "in_progress"
     assert delta["current_node"] == "pm"
     assert delta["plan"]["summary"].startswith("- step 1")
@@ -99,20 +93,14 @@ def test_pm_done_appends_plan_and_advances_status(tmp_path: Path) -> None:
 def test_pm_block_sets_blocked_reason(tmp_path: Path) -> None:
     state, _, config = _setup(tmp_path)
     stub = _StubAgent(_block_msgs("ambiguous criteria"))
-    delta = asyncio.run(
-        pm_node(state, config=config, agent_factory=lambda s, c: stub)
-    )
+    delta = asyncio.run(pm_node(state, config=config, agent_factory=lambda s, c: stub))
     assert delta["blocked_reason"] == "ambiguous criteria"
     assert delta["current_node"] == "pm"
 
 
 def test_pm_no_signal_treated_as_block(tmp_path: Path) -> None:
     state, _, config = _setup(tmp_path)
-    stub = _StubAgent(
-        [{"type": "assistant", "content": [{"type": "text", "text": "..."}]}]
-    )
-    delta = asyncio.run(
-        pm_node(state, config=config, agent_factory=lambda s, c: stub)
-    )
+    stub = _StubAgent([{"type": "assistant", "content": [{"type": "text", "text": "..."}]}])
+    delta = asyncio.run(pm_node(state, config=config, agent_factory=lambda s, c: stub))
     assert "blocked_reason" in delta
     assert "did not signal" in delta["blocked_reason"].lower()

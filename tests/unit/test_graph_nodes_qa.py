@@ -34,9 +34,7 @@ def _state(tmp_path: Path) -> dict[str, Any]:
     )
     task = Task(frontmatter=fm, body="# demo\n")
     write_task(task, p)
-    s = initial_state(
-        task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path
-    )
+    s = initial_state(task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path)
     s["plan"] = {"summary": "do it", "verdict": None}
     return s
 
@@ -56,9 +54,7 @@ def _done(summary: str, verdict: str | None) -> list[Any]:
     return [
         {
             "type": "assistant",
-            "content": [
-                {"type": "tool_use", "name": "mcp__signals__done", "input": args}
-            ],
+            "content": [{"type": "tool_use", "name": "mcp__signals__done", "input": args}],
         }
     ]
 
