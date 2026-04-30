@@ -33,10 +33,6 @@ def register_stubs(app: typer.Typer) -> None:
 
     app.add_typer(daemon_app, name="daemon")
 
-    @app.command(help="Show current kanban state. (Phase 4)")
-    def status(watch: bool = typer.Option(False, "--watch")) -> None:
-        _not_implemented("status", "4")
-
     @app.command(help="Inspect a task's full trajectory. (Phase 4)")
     def inspect(task_id: str) -> None:
         _not_implemented("inspect", "4")
