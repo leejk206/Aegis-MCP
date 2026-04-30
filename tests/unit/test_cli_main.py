@@ -18,7 +18,3 @@ def test_cli_help_lists_subcommands() -> None:
         assert name in result.output
 
 
-def test_cli_stub_run_reports_not_implemented() -> None:
-    result = runner.invoke(app, ["run"])
-    assert result.exit_code != 0
-    assert "Phase 4" in result.output
