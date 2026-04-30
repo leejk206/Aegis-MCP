@@ -61,9 +61,7 @@ def test_happy_path_pauses_before_docs(tmp_path: Path) -> None:
             }
         ),
         "dev": _node({"implementation_status": "done", "current_node": "dev"}),
-        "qa": _node(
-            {"test_report": {"verdict": "pass", "summary": "ok"}, "current_node": "qa"}
-        ),
+        "qa": _node({"test_report": {"verdict": "pass", "summary": "ok"}, "current_node": "qa"}),
         "reviewer": _node(
             {
                 "review": {"verdict": "approve", "summary": "ok"},
@@ -115,9 +113,7 @@ def test_qa_fail_loops_back_to_dev(tmp_path: Path) -> None:
                 "current_node": "pm",
             },
         ),
-        "dev": trace(
-            "dev", {"implementation_status": "done", "current_node": "dev"}
-        ),
+        "dev": trace("dev", {"implementation_status": "done", "current_node": "dev"}),
         "qa": qa_fn,
         "reviewer": trace(
             "reviewer",
@@ -126,9 +122,7 @@ def test_qa_fail_loops_back_to_dev(tmp_path: Path) -> None:
                 "current_node": "reviewer",
             },
         ),
-        "docs": trace(
-            "docs", {"current_node": "docs", "implementation_status": "done"}
-        ),
+        "docs": trace("docs", {"current_node": "docs", "implementation_status": "done"}),
     }
     graph = build_graph(node_overrides=nodes)
     cfg = {"configurable": {"thread_id": "002"}}
