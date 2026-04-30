@@ -5,7 +5,7 @@ from pathlib import Path
 import typer
 
 from aegis.cli.commands.init import AEGIS_DIRNAME
-from aegis.core.config import load_config
+from aegis.core.config import AegisConfig, load_config
 from aegis.core.lifecycle import find_task, list_tasks
 from aegis.core.task import TaskStatus
 from aegis.graph.runtime import run_one_task
@@ -18,7 +18,7 @@ def _aegis_dir(repo_root: Path) -> Path:
     return d
 
 
-def _config_for(aegis_dir: Path):
+def _config_for(aegis_dir: Path) -> AegisConfig:
     return load_config(aegis_dir / "config.yaml")
 
 
