@@ -45,14 +45,6 @@ def register_stubs(app: typer.Typer) -> None:
     def trace(task_id: str) -> None:
         _not_implemented("trace", "5")
 
-    @app.command(help="Retry a blocked or rejected task. (Phase 4)")
-    def retry(
-        task_id: str,
-        budget_usd: float | None = typer.Option(None, "--budget-usd"),
-        from_node: str | None = typer.Option(None, "--from"),
-    ) -> None:
-        _not_implemented("retry", "4")
-
     @app.command(help="Start the read-only dashboard. (Phase 6)")
     def web(
         port: int = typer.Option(8765, "--port"),
