@@ -35,6 +35,7 @@ register_stubs(app)
 
 from aegis.cli.commands.approve import register as register_approve  # noqa: E402
 from aegis.cli.commands.config import register as register_config  # noqa: E402
+from aegis.cli.commands.daemon import register as register_daemon  # noqa: E402
 from aegis.cli.commands.init import register as register_init  # noqa: E402
 from aegis.cli.commands.inspect import register as register_inspect  # noqa: E402
 from aegis.cli.commands.reject import register as register_reject  # noqa: E402
@@ -54,3 +55,4 @@ register_approve(app)
 register_reject(app)
 register_retry(app)
 register_inspect(app)
+register_daemon(app)
