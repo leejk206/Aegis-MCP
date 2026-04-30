@@ -17,6 +17,8 @@ dependencies = [
     "typer>=0.12",
     "mcp>=1.0",
     "claude-agent-sdk>=0.1.61",
+    "langgraph>=0.2.50",
+    "langgraph-checkpoint-sqlite>=2.0",
 ]
 
 [project.optional-dependencies]
