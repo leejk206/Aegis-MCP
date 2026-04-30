@@ -33,6 +33,7 @@ def _root(
 
 register_stubs(app)
 
+from aegis.cli.commands.approve import register as register_approve  # noqa: E402
 from aegis.cli.commands.config import register as register_config  # noqa: E402
 from aegis.cli.commands.init import register as register_init  # noqa: E402
 from aegis.cli.commands.run import register as register_run  # noqa: E402
@@ -46,3 +47,4 @@ register_config(app)
 register_run(app)
 register_status(app)
 register_stop(app)
+register_approve(app)
