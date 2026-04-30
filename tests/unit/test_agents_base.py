@@ -74,7 +74,9 @@ def test_build_options_cwd_is_the_worktree(tmp_path: Path) -> None:
 def test_build_options_mcp_servers_match_role(tmp_path: Path) -> None:
     config = _make_config()
     options = build_options("dev", tmp_path, config)
-    assert set(options.mcp_servers.keys()) == {"git", "fs", "shell"}
+    # ``signals`` is the universal in-process server merged in for every
+    # role; the role-specific stdio servers for ``dev`` are git/fs/shell.
+    assert set(options.mcp_servers.keys()) == {"git", "fs", "shell", "signals"}
 
 
 def test_build_options_allowed_tools_match_role(tmp_path: Path) -> None:
@@ -175,7 +177,7 @@ def test_agent_builds_options_for_its_role(tmp_path: Path) -> None:
     asyncio.run(agent.run("please review"))
     assert _FakeClient.last_instance is not None
     opts = _FakeClient.last_instance.options
-    assert set(opts.mcp_servers.keys()) == {"git", "project-index"}
+    assert set(opts.mcp_servers.keys()) == {"git", "project-index", "signals"}
     assert opts.system_prompt.startswith("# Role: Reviewer")
     assert opts.model == config.llm.models["reviewer"]
 
