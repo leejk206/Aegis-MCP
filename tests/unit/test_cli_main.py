@@ -16,5 +16,3 @@ def test_cli_help_lists_subcommands() -> None:
     assert result.exit_code == 0
     for name in ["run", "daemon", "approve", "web"]:
         assert name in result.output
-
-

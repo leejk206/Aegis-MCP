@@ -33,9 +33,7 @@ def _state(tmp_path: Path) -> dict[str, Any]:
     )
     task = Task(frontmatter=fm, body="# demo\n\n## Plan\n- step 1\n")
     write_task(task, p)
-    s = initial_state(
-        task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path
-    )
+    s = initial_state(task=task, task_path=p, worktree_path=tmp_path, target_repo_root=tmp_path)
     s["plan"] = {"summary": "- step 1", "verdict": None}
     return s
 
@@ -67,9 +65,7 @@ def test_dev_done_marks_implementation_complete(tmp_path: Path) -> None:
     state = _state(tmp_path)
     config = AegisConfig(project=ProjectConfig(name="t"))
     delta = asyncio.run(
-        dev_node(
-            state, config=config, agent_factory=lambda s, c: _StubAgent(_done())
-        )
+        dev_node(state, config=config, agent_factory=lambda s, c: _StubAgent(_done()))
     )
     assert delta["implementation_status"] == "done"
     assert delta["current_node"] == "dev"
@@ -90,11 +86,7 @@ def test_dev_block_records_reason(tmp_path: Path) -> None:
             ],
         }
     ]
-    delta = asyncio.run(
-        dev_node(
-            state, config=config, agent_factory=lambda s, c: _StubAgent(msgs)
-        )
-    )
+    delta = asyncio.run(dev_node(state, config=config, agent_factory=lambda s, c: _StubAgent(msgs)))
     assert delta["blocked_reason"] == "test fixture missing"
 
 
