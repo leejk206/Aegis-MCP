@@ -13,26 +13,6 @@ def _not_implemented(command: str, phase: str) -> None:
 
 
 def register_stubs(app: typer.Typer) -> None:
-    daemon_app = typer.Typer(help="Background worker mode. (Phase 4)")
-
-    @daemon_app.command("start")
-    def daemon_start() -> None:
-        _not_implemented("daemon start", "4")
-
-    @daemon_app.command("stop")
-    def daemon_stop() -> None:
-        _not_implemented("daemon stop", "4")
-
-    @daemon_app.command("status")
-    def daemon_status() -> None:
-        _not_implemented("daemon status", "4")
-
-    @daemon_app.command("restart")
-    def daemon_restart() -> None:
-        _not_implemented("daemon restart", "4")
-
-    app.add_typer(daemon_app, name="daemon")
-
     @app.command(help="Tail a task's log. (Phase 5)")
     def logs(task_id: str, follow: bool = typer.Option(False, "--follow")) -> None:
         _not_implemented("logs", "5")
