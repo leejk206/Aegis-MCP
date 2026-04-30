@@ -61,10 +61,6 @@ def register_stubs(app: typer.Typer) -> None:
     ) -> None:
         _not_implemented("retry", "4")
 
-    @app.command(help="Kill switch. (Phase 4)")
-    def stop(task_id: str | None = typer.Argument(None)) -> None:
-        _not_implemented("stop", "4")
-
     @app.command(help="Start the read-only dashboard. (Phase 6)")
     def web(
         port: int = typer.Option(8765, "--port"),
