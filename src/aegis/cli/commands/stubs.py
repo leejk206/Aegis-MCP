@@ -13,10 +13,6 @@ def _not_implemented(command: str, phase: str) -> None:
 
 
 def register_stubs(app: typer.Typer) -> None:
-    @app.command(help="Tail a task's log. (Phase 5)")
-    def logs(task_id: str, follow: bool = typer.Option(False, "--follow")) -> None:
-        _not_implemented("logs", "5")
-
     @app.command(help="Open a task trace in the browser. (Phase 5)")
     def trace(task_id: str) -> None:
         _not_implemented("trace", "5")
