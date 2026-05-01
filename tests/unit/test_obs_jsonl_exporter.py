@@ -93,5 +93,23 @@ def test_truncates_string_attributes_over_32kb(tmp_path: Path) -> None:
         [_fake_span(name="big", task_id="005", attributes={"prompt": huge})]
     )
     record = json.loads((tmp_path / "005.jsonl").read_text(encoding="utf-8").strip())
-    assert len(record["attributes"]["prompt"]) == 32 * 1024
-    assert record["attributes"]["prompt"].endswith("…[truncated]") is False  # exact byte cut, no marker fanout
+    prompt = record["attributes"]["prompt"]
+    assert len(prompt.encode("utf-8")) == 32 * 1024
+    assert prompt.endswith("…[truncated]") is False  # exact byte cut, no marker fanout
+
+
+def test_truncates_multibyte_utf8_at_byte_boundary(tmp_path: Path) -> None:
+    # Korean Hangul syllables are 3 bytes each in UTF-8.
+    big_korean = "안" * 14_000  # 42_000 bytes encoded
+    exporter = JSONLSpanExporter(trace_dir=tmp_path)
+    exporter.export(
+        [_fake_span(name="ko", task_id="006", attributes={"prompt": big_korean})]
+    )
+    record = json.loads((tmp_path / "006.jsonl").read_text(encoding="utf-8").strip())
+    prompt = record["attributes"]["prompt"]
+    encoded = prompt.encode("utf-8")
+    assert len(encoded) <= 32 * 1024
+    # Must respect character boundaries — no UnicodeDecodeError on round-trip.
+    assert prompt.encode("utf-8").decode("utf-8") == prompt
+    # Should be near the limit, not way under (sanity).
+    assert len(encoded) > (32 * 1024) - 3

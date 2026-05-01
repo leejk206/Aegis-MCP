@@ -24,9 +24,18 @@ _MAX_STR_BYTES = 32 * 1024
 
 
 def _truncate(value: Any) -> Any:
-    if isinstance(value, str) and len(value) > _MAX_STR_BYTES:
-        return value[:_MAX_STR_BYTES]
-    return value
+    if not isinstance(value, str):
+        return value
+    encoded = value.encode("utf-8")
+    if len(encoded) <= _MAX_STR_BYTES:
+        return value
+    truncated = bytearray()
+    for char in value:
+        char_bytes = char.encode("utf-8")
+        if len(truncated) + len(char_bytes) > _MAX_STR_BYTES:
+            break
+        truncated.extend(char_bytes)
+    return truncated.decode("utf-8")
 
 
 def _attrs_to_dict(attributes: Any) -> dict[str, Any]:
