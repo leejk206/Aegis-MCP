@@ -14,6 +14,7 @@ contextvar around each task run; the JSONL exporter routes by it.
 from __future__ import annotations
 
 import contextvars
+import threading
 from pathlib import Path
 
 from opentelemetry import trace as otel_trace
@@ -28,7 +29,6 @@ from aegis.obs.jsonl_exporter import JSONLSpanExporter
 __all__ = [
     "aegis_task_id_var",
     "bootstrap_tracing",
-    "reset_tracing_for_tests",
     "TaskIdSpanProcessor",
 ]
 
@@ -37,6 +37,7 @@ aegis_task_id_var: contextvars.ContextVar[str | None] = contextvars.ContextVar(
 )
 
 _provider: TracerProvider | None = None
+_bootstrap_lock = threading.Lock()
 
 
 class TaskIdSpanProcessor(SpanProcessor):
@@ -89,10 +90,13 @@ def bootstrap_tracing(config: AegisConfig, aegis_dir: Path) -> TracerProvider:
     global _provider
     if _provider is not None:
         return _provider
-    provider = _build_provider(config, aegis_dir)
-    otel_trace.set_tracer_provider(provider)
-    _provider = provider
-    return provider
+    with _bootstrap_lock:
+        if _provider is not None:
+            return _provider
+        provider = _build_provider(config, aegis_dir)
+        otel_trace.set_tracer_provider(provider)
+        _provider = provider
+    return _provider
 
 
 def reset_tracing_for_tests() -> None:
@@ -106,8 +110,12 @@ def reset_tracing_for_tests() -> None:
     _provider = None
     # The OTel SDK guards set_tracer_provider with a Once flag so it can only
     # fire once per process. For test isolation we must bypass that guard and
-    # reset the module-level globals directly.
+    # reset the module-level globals directly. We also rebuild the proxy so
+    # `get_tracer_provider()` between reset and re-bootstrap doesn't keep a
+    # handle on the previous (shutdown) provider.
+    from opentelemetry.trace import ProxyTracerProvider
     from opentelemetry.util._once import Once
 
     otel_trace._TRACER_PROVIDER_SET_ONCE = Once()  # type: ignore[attr-defined]
     otel_trace._TRACER_PROVIDER = None  # type: ignore[attr-defined]
+    otel_trace._PROXY_TRACER_PROVIDER = ProxyTracerProvider()  # type: ignore[attr-defined]

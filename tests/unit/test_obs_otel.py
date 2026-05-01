@@ -6,7 +6,7 @@ import pytest
 from opentelemetry import trace as otel_trace
 from opentelemetry.sdk.trace import TracerProvider
 
-from aegis.core.config import AegisConfig, ProjectConfig
+from aegis.core.config import AegisConfig
 from aegis.obs.otel import (
     aegis_task_id_var,
     bootstrap_tracing,
@@ -86,3 +86,11 @@ def test_jsonl_disabled_writes_nothing(tmp_path: Path) -> None:
         aegis_task_id_var.reset(token)
     otel_trace.get_tracer_provider().force_flush()
     assert not (tmp_path / "trace" / "888.jsonl").exists()
+
+
+def test_task_id_processor_skips_when_var_unset(tmp_path: Path) -> None:
+    bootstrap_tracing(_cfg(), tmp_path)
+    tracer = otel_trace.get_tracer("test")
+    # No aegis_task_id_var.set() — contextvar stays at its None default.
+    with tracer.start_as_current_span("orphan_node") as span:
+        assert "aegis.task_id" not in dict(span.attributes or {})
