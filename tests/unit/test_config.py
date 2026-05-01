@@ -5,6 +5,8 @@ import yaml
 from pydantic import ValidationError
 
 from aegis.core.config import (
+    AegisConfig,
+    ProjectConfig,
     default_config,
     dump_config,
     load_config,
@@ -91,3 +93,17 @@ gates:
     )
     with pytest.raises(ValidationError):
         load_config(path)
+
+
+def test_observability_default_enables_jsonl_and_langfuse() -> None:
+    cfg = AegisConfig(project=ProjectConfig(name="t"))
+    assert cfg.observability.jsonl.enabled is True
+    assert cfg.observability.langfuse.enabled is True
+    assert cfg.observability.langsmith.enabled is False
+
+
+def test_observability_jsonl_can_be_disabled() -> None:
+    cfg = AegisConfig.model_validate(
+        {"project": {"name": "t"}, "observability": {"jsonl": {"enabled": False}}}
+    )
+    assert cfg.observability.jsonl.enabled is False

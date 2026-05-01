@@ -117,12 +117,19 @@ class OtelConfig(BaseModel):
     service_name: str = "aegis"
 
 
+class JSONLConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+
+
 class ObservabilityConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     langsmith: LangSmithConfig = Field(default_factory=LangSmithConfig)
     langfuse: LangfuseConfig = Field(default_factory=LangfuseConfig)
     otel: OtelConfig = Field(default_factory=OtelConfig)
+    jsonl: JSONLConfig = Field(default_factory=JSONLConfig)
 
 
 class MCPServerConfig(BaseModel):
