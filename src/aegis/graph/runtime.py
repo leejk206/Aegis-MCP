@@ -19,6 +19,8 @@ import subprocess
 from pathlib import Path
 from typing import Any, cast
 
+from opentelemetry import trace as otel_trace
+
 from aegis.core.config import AegisConfig
 from aegis.core.lifecycle import find_task, transition
 from aegis.core.task import (
@@ -31,6 +33,7 @@ from aegis.core.worktree import create_worktree, remove_worktree
 from aegis.graph.checkpointer import open_async_checkpointer
 from aegis.graph.state import TeamState, initial_state
 from aegis.graph.team_graph import build_graph
+from aegis.obs import aegis_task_id_var, bootstrap_tracing
 
 __all__ = [
     "run_one_task",
@@ -87,6 +90,8 @@ async def _run_one_task_async(
     config: AegisConfig,
     node_overrides: dict[str, Any] | None,
 ) -> TeamState:
+    bootstrap_tracing(config, aegis_dir)
+
     task = parse_task(task_path)
     if task.frontmatter.status == TaskStatus.BACKLOG:
         task_path = transition(task_path, aegis_dir, TaskStatus.IN_PROGRESS)
@@ -108,9 +113,22 @@ async def _run_one_task_async(
     write_task(task, task_path)
 
     cfg = {"configurable": {"thread_id": task.frontmatter.id}}
-    async with open_async_checkpointer(aegis_dir) as saver:
-        graph = build_graph(node_overrides=node_overrides, checkpointer=saver)
-        final = await graph.ainvoke(state, config=cfg)
+    token = aegis_task_id_var.set(task.frontmatter.id)
+    try:
+        tracer = otel_trace.get_tracer("aegis.runtime")
+        with tracer.start_as_current_span("aegis.task") as root_span:
+            root_span.set_attribute("aegis.task_id", task.frontmatter.id)
+            root_span.set_attribute("aegis.task_title", task.frontmatter.title)
+            trace_id_hex = format(root_span.get_span_context().trace_id, "032x")
+            state["trace_id"] = trace_id_hex
+            task.frontmatter.trace_id = trace_id_hex
+            write_task(task, task_path)
+
+            async with open_async_checkpointer(aegis_dir) as saver:
+                graph = build_graph(node_overrides=node_overrides, checkpointer=saver)
+                final = await graph.ainvoke(state, config=cfg)
+    finally:
+        aegis_task_id_var.reset(token)
 
     review = final.get("review") or {}
     if final.get("blocked_reason"):
@@ -120,7 +138,6 @@ async def _run_one_task_async(
         final["awaiting_human"] = True
         transition(task_path, aegis_dir, TaskStatus.REVIEW)
     else:
-        # Reached END after docs (no human gate observed). Merge.
         try:
             merge_worktree_into_main(repo_root, branch)
             transition(task_path, aegis_dir, TaskStatus.DONE)
@@ -159,6 +176,8 @@ async def _resume_after_approve_async(
     config: AegisConfig,
     node_overrides: dict[str, Any] | None,
 ) -> TeamState:
+    bootstrap_tracing(config, aegis_dir)
+
     found = find_task(aegis_dir, task_id)
     if found is None:
         raise FileNotFoundError(f"task {task_id} not found")
@@ -168,10 +187,17 @@ async def _resume_after_approve_async(
 
     worktree_path, branch = _worktree_paths(aegis_dir, task)
     cfg = {"configurable": {"thread_id": task_id}}
-    async with open_async_checkpointer(aegis_dir) as saver:
-        graph = build_graph(node_overrides=node_overrides, checkpointer=saver)
-        # Resume from the interrupt by passing None (LangGraph idiom).
-        final = await graph.ainvoke(None, config=cfg)
+    token = aegis_task_id_var.set(task_id)
+    try:
+        tracer = otel_trace.get_tracer("aegis.runtime")
+        with tracer.start_as_current_span("aegis.task.resume") as root_span:
+            root_span.set_attribute("aegis.task_id", task_id)
+            async with open_async_checkpointer(aegis_dir) as saver:
+                graph = build_graph(node_overrides=node_overrides, checkpointer=saver)
+                final = await graph.ainvoke(None, config=cfg)
+    finally:
+        aegis_task_id_var.reset(token)
+
     if final.get("blocked_reason"):
         _record_blocked_reason(task_path, final["blocked_reason"])
         transition(task_path, aegis_dir, TaskStatus.BLOCKED)

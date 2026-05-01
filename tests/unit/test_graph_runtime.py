@@ -206,3 +206,41 @@ def test_reject_moves_to_rejected_and_removes_worktree(tmp_path: Path) -> None:
         reject_task(task_id="001", aegis_dir=aegis, repo_root=repo, reason="auth broke")
 
     assert next((aegis / "rejected").glob("001-*.md"), None) is not None
+
+
+def test_run_one_task_writes_trace_id_to_frontmatter(tmp_path: Path) -> None:
+    """After a graph run, the task's frontmatter has a non-null trace_id."""
+    from aegis.obs.otel import reset_tracing_for_tests
+
+    reset_tracing_for_tests()
+    repo, aegis = _bootstrap_repo(tmp_path)
+    p = _seed_task(aegis)
+
+    with (
+        patch("aegis.graph.runtime.create_worktree") as cw,
+        patch("aegis.graph.runtime.remove_worktree") as rw,
+        patch("aegis.graph.runtime.merge_worktree_into_main") as merge,
+    ):
+        cw.side_effect = lambda repo_root, worktree_path, branch: worktree_path.mkdir(
+            parents=True, exist_ok=True
+        )
+        rw.side_effect = lambda *a, **kw: None
+        merge.side_effect = lambda *a, **kw: None
+
+        config = AegisConfig.model_validate(
+            {"project": {"name": "t"}, "observability": {"langfuse": {"enabled": False}}}
+        )
+        run_one_task(
+            task_path=p,
+            aegis_dir=aegis,
+            repo_root=repo,
+            config=config,
+            node_overrides=_stub_nodes(verdict="approve"),
+        )
+
+    moved = next((aegis / "review").glob("001-*.md"), None)
+    assert moved is not None
+    refreshed = parse_task(moved)
+    assert refreshed.frontmatter.trace_id is not None
+    assert len(refreshed.frontmatter.trace_id) == 32  # 128-bit OTel id, hex
+    reset_tracing_for_tests()
