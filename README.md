@@ -33,3 +33,22 @@ make test
 - `aegis run`, `aegis daemon`, `aegis approve`, `aegis web`, and
   everything that touches actual LLM agents. These arrive in Phases
   2–6.
+
+## Observability
+
+Aegis emits OpenTelemetry spans for every role-node invocation. Three
+sinks are available:
+
+- **JSONL local mirror** (always on by default). One file per task at
+  `.aegis/trace/<task_id>.jsonl`. View with `aegis logs <id> [--follow]`.
+- **Langfuse** (self-hosted). Enable `observability.langfuse.enabled`
+  in `.aegis/config.yaml`, run `make langfuse` to start the stack on
+  `localhost:3000`, then set `LANGFUSE_PUBLIC_KEY` and
+  `LANGFUSE_SECRET_KEY` in your environment.
+- **LangSmith** (SaaS). Enable `observability.langsmith.enabled` and set
+  `LANGSMITH_API_KEY`. LangGraph's built-in callback handler handles the
+  rest.
+
+Open a remote trace with `aegis trace <id>` — Aegis prefers LangSmith
+when both are configured, and falls back to a hint about `aegis logs`
+when neither is.
