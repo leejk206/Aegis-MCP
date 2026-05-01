@@ -13,10 +13,6 @@ def _not_implemented(command: str, phase: str) -> None:
 
 
 def register_stubs(app: typer.Typer) -> None:
-    @app.command(help="Open a task trace in the browser. (Phase 5)")
-    def trace(task_id: str) -> None:
-        _not_implemented("trace", "5")
-
     @app.command(help="Start the read-only dashboard. (Phase 6)")
     def web(
         port: int = typer.Option(8765, "--port"),
