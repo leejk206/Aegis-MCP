@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  langfuse-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: langfuse
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse-pg:/var/lib/postgresql/data
+
+  langfuse-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  langfuse:
+    image: langfuse/langfuse:latest
+    restart: unless-stopped
+    depends_on: [langfuse-postgres, langfuse-redis]
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://langfuse:langfuse@langfuse-postgres:5432/langfuse
+      REDIS_HOST: langfuse-redis
+      NEXTAUTH_SECRET: local-dev-secret-change-me
+      NEXTAUTH_URL: http://localhost:3000
+      SALT: local-dev-salt-change-me
+      TELEMETRY_ENABLED: "false"
+
+volumes:
+  langfuse-pg:
