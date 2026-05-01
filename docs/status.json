@@ -1,0 +1,329 @@
+{
+  "$schema_version": "1",
+  "project": {
+    "name": "aegis",
+    "version": "0.1.0",
+    "description": "Personal AI engineering team: LangGraph + Claude Agent SDK + MCP for solo developers",
+    "license": "MIT",
+    "python": ">=3.11",
+    "spec_doc": "docs/superpowers/specs/2026-04-14-aegis-ai-engineering-team-design.md",
+    "readme": "README.md"
+  },
+  "snapshot": {
+    "as_of_date": "2026-05-01",
+    "branch": "main",
+    "head_commit": "0a1997b0d2b8aa529d8a38e126222e19efec283a",
+    "head_subject": "docs: observability section in README",
+    "total_commits": 89,
+    "tracked_files": 121,
+    "tags": [
+      "phase-1-complete",
+      "phase-2-complete",
+      "phase-3-complete",
+      "phase-4-complete",
+      "phase-5-complete"
+    ],
+    "working_tree": {
+      "untracked": [".cache/", ".claude.json"],
+      "modified": []
+    }
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Core scaffolding",
+      "status": "complete",
+      "tag": "phase-1-complete",
+      "plan": "docs/superpowers/plans/2026-04-14-aegis-phase-1-core.md",
+      "deliverables": [
+        "src/aegis package skeleton",
+        "Typer CLI root (aegis) with init/task/config",
+        "core: config.py, task.py, worktree.py, lifecycle.py, budget.py"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "MCP servers",
+      "status": "complete",
+      "tag": "phase-2-complete",
+      "plan": "docs/superpowers/plans/2026-04-14-aegis-phase-2-mcp-servers.md",
+      "deliverables": [
+        "aegis-git-mcp",
+        "aegis-fs-mcp",
+        "aegis-shell-mcp",
+        "aegis-project-index-mcp",
+        "shared base in mcp_servers/_base.py"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Agent layer (Claude Agent SDK wrapper + prompts)",
+      "status": "complete",
+      "tag": "phase-3-complete",
+      "plan": "docs/superpowers/plans/2026-04-17-aegis-phase-3-agents.md",
+      "deliverables": [
+        "agents/base.py — AegisAgent",
+        "agents/registry.py — per-role RoleSpec table",
+        "agents/tools.py — MCP server wiring + signals merge",
+        "prompts: pm.md, dev.md, qa.md, reviewer.md, docs.md"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "LangGraph team graph + CLI integration",
+      "status": "complete",
+      "tag": "phase-4-complete",
+      "plan": "docs/superpowers/plans/2026-04-30-aegis-phase-4-graph-and-cli.md",
+      "deliverables": [
+        "graph/state.py — TeamState TypedDict + initial_state",
+        "graph/signals.py — in-process done/block MCP server",
+        "graph/parser.py — done/block tool_use parser",
+        "graph/checkpointer.py — SqliteSaver wrapper",
+        "graph/node_helpers.py — stop-flag, append-section, agent factory",
+        "graph/nodes/{pm,dev,qa,reviewer,docs}.py",
+        "graph/team_graph.py — StateGraph with QA/Reviewer loops, interrupt_before=['docs']",
+        "graph/runtime.py — run/resume/reject driver, worktree mgmt",
+        "CLI: run, status, stop, approve, reject, retry, inspect, daemon"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Observability (OTel + LangSmith + Langfuse + JSONL)",
+      "status": "complete",
+      "tag": "phase-5-complete",
+      "plan": "docs/superpowers/plans/2026-05-01-aegis-phase-5-observability.md",
+      "deliverables": [
+        "obs/jsonl_exporter.py — custom OTel SpanExporter writing one JSON line per span to .aegis/trace/<task_id>.jsonl (UTF-8 byte-bounded truncation at 32KB)",
+        "obs/otel.py — bootstrap_tracing, TaskIdSpanProcessor, aegis_task_id_var contextvar (idempotent, thread-safe via double-checked lock)",
+        "obs/langsmith_exporter.py — LangSmith env-var bootstrap (LANGCHAIN_TRACING_V2 + LANGCHAIN_PROJECT)",
+        "obs/langfuse_exporter.py — Langfuse OTLP/HTTP exporter factory with Basic-auth",
+        "obs/instrumentation.py — traced_node decorator (records role/verdict/blocker/exception)",
+        "graph/runtime.py — root span (aegis.task / aegis.task.resume) + frontmatter trace_id persistence",
+        "graph/team_graph.py — per-node child spans via traced_node; interrupt_before only when checkpointer set",
+        "CLI: logs (tails JSONL trace), trace (opens LangSmith/Langfuse URL or hints aegis logs)",
+        "docker-compose.yml — Langfuse + Postgres + Redis self-host stack",
+        "Makefile: make langfuse / make langfuse-down"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Web dashboard (read-only)",
+      "status": "not_started",
+      "plan": null,
+      "placeholders": ["src/aegis/web/__init__.py (empty)"],
+      "cli_stubs_for_phase_6": ["aegis web"]
+    }
+  ],
+  "package_layout": {
+    "root": "src/aegis",
+    "modules": {
+      "core": {
+        "path": "src/aegis/core",
+        "files": ["config.py", "task.py", "worktree.py", "lifecycle.py", "budget.py"],
+        "status": "implemented"
+      },
+      "mcp_servers": {
+        "path": "src/aegis/mcp_servers",
+        "files": ["_base.py", "fs_mcp.py", "git_mcp.py", "shell_mcp.py", "project_index_mcp.py"],
+        "status": "implemented"
+      },
+      "agents": {
+        "path": "src/aegis/agents",
+        "files": ["base.py", "registry.py", "tools.py"],
+        "prompts": ["prompts/pm.md", "prompts/dev.md", "prompts/qa.md", "prompts/reviewer.md", "prompts/docs.md"],
+        "status": "implemented"
+      },
+      "graph": {
+        "path": "src/aegis/graph",
+        "files": [
+          "state.py",
+          "signals.py",
+          "parser.py",
+          "checkpointer.py",
+          "node_helpers.py",
+          "team_graph.py",
+          "runtime.py",
+          "nodes/pm.py",
+          "nodes/dev.py",
+          "nodes/qa.py",
+          "nodes/reviewer.py",
+          "nodes/docs.py"
+        ],
+        "status": "implemented"
+      },
+      "cli": {
+        "path": "src/aegis/cli",
+        "entrypoint": "aegis.cli.main:app",
+        "files": [
+          "main.py",
+          "commands/init.py",
+          "commands/task.py",
+          "commands/config.py",
+          "commands/run.py",
+          "commands/status.py",
+          "commands/stop.py",
+          "commands/approve.py",
+          "commands/reject.py",
+          "commands/retry.py",
+          "commands/inspect.py",
+          "commands/daemon.py",
+          "commands/logs.py",
+          "commands/trace.py",
+          "commands/stubs.py"
+        ],
+        "status": "implemented"
+      },
+      "obs": {
+        "path": "src/aegis/obs",
+        "files": [
+          "__init__.py",
+          "otel.py",
+          "jsonl_exporter.py",
+          "langsmith_exporter.py",
+          "langfuse_exporter.py",
+          "instrumentation.py"
+        ],
+        "status": "implemented"
+      },
+      "web": {
+        "path": "src/aegis/web",
+        "files": ["__init__.py"],
+        "status": "placeholder_empty"
+      }
+    }
+  },
+  "cli_commands": {
+    "implemented": [
+      { "name": "init", "help": "Create .aegis/ in a git repo" },
+      { "name": "task add|list|show|edit", "help": "Author and browse markdown tasks" },
+      { "name": "config get|set|edit", "help": "Read/edit .aegis/config.yaml" },
+      { "name": "run", "help": "Run the team graph in the foreground (single task or drain backlog)" },
+      { "name": "status", "help": "Show graph state for tasks" },
+      { "name": "stop", "help": "Kill switch (sets stop flag)" },
+      { "name": "approve", "help": "Resume a task paused at the docs gate" },
+      { "name": "reject", "help": "Discard a task paused at the docs gate" },
+      { "name": "retry", "help": "Retry a failed/blocked task" },
+      { "name": "inspect", "help": "Print a task's full markdown" },
+      { "name": "daemon", "help": "start|stop|status|restart background driver" },
+      { "name": "logs", "help": "Tail a task's JSONL trace (--follow polls every 250ms)" },
+      { "name": "trace", "help": "Open a task's trace in LangSmith/Langfuse, or hint aegis logs" }
+    ],
+    "stubbed_for_future_phases": [
+      { "name": "web", "phase": 6, "behavior": "exits 2 with 'not implemented' message" }
+    ]
+  },
+  "console_scripts": [
+    "aegis = aegis.cli.main:app",
+    "aegis-git-mcp = aegis.mcp_servers.git_mcp:main",
+    "aegis-fs-mcp = aegis.mcp_servers.fs_mcp:main",
+    "aegis-shell-mcp = aegis.mcp_servers.shell_mcp:main",
+    "aegis-project-index-mcp = aegis.mcp_servers.project_index_mcp:main"
+  ],
+  "agents": {
+    "roles": ["pm", "dev", "qa", "reviewer", "docs"],
+    "graph_topology": {
+      "entry": "pm",
+      "edges": [
+        "pm -> dev",
+        "dev -> qa",
+        "qa -> dev (on rework verdict, loop-back limited)",
+        "qa -> reviewer (on pass)",
+        "reviewer -> dev (on rework)",
+        "reviewer -> [interrupt_before=docs] (on approve, when checkpointer set)",
+        "docs -> END"
+      ],
+      "human_gate": "interrupt_before=['docs'] when a checkpointer is supplied — aegis approve resumes, aegis reject discards",
+      "checkpointer": "langgraph-checkpoint-sqlite (SqliteSaver wrapper in graph/checkpointer.py)",
+      "completion_signals": "in-process MCP server providing mcp__signals__done and mcp__signals__block, parsed by graph/parser.py"
+    },
+    "tool_allowlists": {
+      "pm": "project-index + fs read + signals (no fs writes)",
+      "dev": "git read+write, fs read+write, shell, signals",
+      "qa": "git read, fs read+write, shell, signals (no git writes — Dev owns commits)",
+      "reviewer": "git read + project-index + signals (no git writes)",
+      "docs": "fs read+write, git read + git_add + git_commit, signals (no branch/checkout/worktree/merge)"
+    }
+  },
+  "mcp_servers": {
+    "external": [
+      { "name": "git", "module": "aegis.mcp_servers.git_mcp", "loc": 160 },
+      { "name": "fs", "module": "aegis.mcp_servers.fs_mcp", "loc": 113 },
+      { "name": "shell", "module": "aegis.mcp_servers.shell_mcp", "loc": 90 },
+      { "name": "project-index", "module": "aegis.mcp_servers.project_index_mcp", "loc": 106 }
+    ],
+    "in_process": [
+      { "name": "signals", "module": "aegis.graph.signals", "tools": ["done", "block"] }
+    ]
+  },
+  "observability": {
+    "otel_pipeline": {
+      "tracer_provider": "aegis.obs.otel.bootstrap_tracing (idempotent, thread-safe)",
+      "span_processors": [
+        "TaskIdSpanProcessor — stamps aegis.task_id from contextvar on every span",
+        "SimpleSpanProcessor(JSONLSpanExporter) — when observability.jsonl.enabled (default true)",
+        "BatchSpanProcessor(OTLPSpanExporter) — when observability.langfuse.enabled and keys present"
+      ],
+      "spans": {
+        "root": "aegis.task / aegis.task.resume (in graph/runtime.py)",
+        "node": "<role>_node (via aegis.obs.traced_node, applied in graph/team_graph.py)"
+      }
+    },
+    "langsmith": "parallel pipeline — env-var bootstrap (LANGCHAIN_TRACING_V2 + LANGCHAIN_PROJECT) so LangGraph's built-in callback handler ships traces",
+    "langfuse": "OTLP/HTTP at <url>/api/public/otel/v1/traces with Basic-auth from LANGFUSE_PUBLIC_KEY/LANGFUSE_SECRET_KEY",
+    "jsonl_mirror": ".aegis/trace/<task_id>.jsonl — UTF-8 byte-bounded (32KB), append-only, served by `aegis logs <id> [--follow]`",
+    "out_of_scope_for_phase_5": [
+      "Per-MCP-tool child spans (would require per-subprocess OTel init + W3C context propagation across stdio)",
+      "Cost-per-span (requires threading `usage` data through the message stream into TeamState)"
+    ]
+  },
+  "tests": {
+    "framework": "pytest",
+    "location": "tests/unit",
+    "file_count": 46,
+    "total_test_loc": 4108,
+    "coverage_areas": [
+      "core (config, task, worktree, lifecycle, budget)",
+      "mcp_servers (fs, git, shell, project_index, _base)",
+      "agents (base, registry, tools, prompts, per_role)",
+      "graph (state, signals, parser, checkpointer, node_helpers, team_graph, runtime, nodes/*)",
+      "cli (main, init, task, config, run, status, stop, approve, reject, retry, inspect, daemon, logs, trace)",
+      "obs (jsonl_exporter, otel, langsmith_exporter, langfuse_exporter, instrumentation)"
+    ],
+    "local_run_status": "285 passed / 4 skipped excluding tests/unit/test_shell_mcp.py (pre-existing WSL env failures: missing `python` binary on PATH)",
+    "ci_run_status": "passing per phase-5-complete tag"
+  },
+  "dependencies": {
+    "runtime": [
+      "pydantic>=2.7",
+      "python-frontmatter>=1.1",
+      "pyyaml>=6.0",
+      "typer>=0.12",
+      "mcp>=1.0",
+      "claude-agent-sdk>=0.1.61",
+      "langgraph>=0.2.50",
+      "langgraph-checkpoint-sqlite>=2.0",
+      "opentelemetry-api>=1.27",
+      "opentelemetry-sdk>=1.27",
+      "opentelemetry-exporter-otlp-proto-http>=1.27",
+      "langsmith>=0.1.140",
+      "langfuse>=2.50"
+    ],
+    "dev": ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "types-PyYAML>=6.0"]
+  },
+  "tooling": {
+    "ruff": { "line_length": 100, "target": "py311", "selected_rules": ["E", "F", "I", "B", "UP", "SIM"] },
+    "mypy": { "strict": true, "warn_unreachable": true, "files": ["src/aegis"] }
+  },
+  "next_phase": {
+    "phase": 6,
+    "scope": "Read-only web dashboard (kanban + task view + approval endpoints), wire `aegis web`",
+    "after_that": null
+  },
+  "open_questions_deferred": [
+    "Multi-project daemon (initial: one project per daemon process)",
+    "File watcher vs poll-based backlog ingestion (currently poll on each loop)",
+    "Web templating choice (Jinja2+HTMX baseline; Starlette+HTMX+Tailwind CDN acceptable)",
+    "Per-MCP-tool child spans via stdio context propagation (deferred from Phase 5)",
+    "Cost-per-span capture (deferred from Phase 5; needs SDK usage data threaded into TeamState)"
+  ]
+}
