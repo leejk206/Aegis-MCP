@@ -14,6 +14,7 @@ from langgraph.graph import END, START, StateGraph
 
 from aegis.graph.nodes import dev_node, docs_node, pm_node, qa_node, reviewer_node
 from aegis.graph.state import TeamState
+from aegis.obs import traced_node
 
 __all__ = [
     "build_graph",
@@ -91,11 +92,11 @@ def build_graph(
     # passing them in as overrides. The defaults below are therefore only
     # useful when callers supply pre-bound overrides — kept here as a
     # convenience and to satisfy LangGraph's "every node has an action".
-    pm: Any = overrides.get("pm", pm_node)
-    dev: Any = overrides.get("dev", dev_node)
-    qa: Any = overrides.get("qa", qa_node)
-    reviewer: Any = overrides.get("reviewer", reviewer_node)
-    docs: Any = overrides.get("docs", docs_node)
+    pm: Any = traced_node("pm")(overrides.get("pm", pm_node))
+    dev: Any = traced_node("dev")(overrides.get("dev", dev_node))
+    qa: Any = traced_node("qa")(overrides.get("qa", qa_node))
+    reviewer: Any = traced_node("reviewer")(overrides.get("reviewer", reviewer_node))
+    docs: Any = traced_node("docs")(overrides.get("docs", docs_node))
 
     graph = StateGraph(TeamState)
     graph.add_node("pm", pm)
@@ -142,7 +143,8 @@ def build_graph(
     graph.add_edge("review_loop_blocker", END)
     graph.add_edge("docs", END)
 
-    kwargs: dict[str, Any] = {"interrupt_before": ["docs"]}
+    kwargs: dict[str, Any] = {}
     if checkpointer is not None:
         kwargs["checkpointer"] = checkpointer
+        kwargs["interrupt_before"] = ["docs"]
     return graph.compile(**kwargs)

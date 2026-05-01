@@ -5,6 +5,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from aegis.core.task import (
     Priority,
     Task,
@@ -163,3 +165,68 @@ def test_qa_fail_cap_blocks_after_max_retries(tmp_path: Path) -> None:
     assert result["test_report"]["verdict"] == "fail"
     assert result["blocked_reason"] is not None
     assert "QA loop" in result["blocked_reason"]
+
+
+async def _stub_pm(state):
+    return {"plan": {"summary": "x"}, "current_node": "pm"}
+
+
+async def _stub_dev(state):
+    return {"implementation_status": "done", "current_node": "dev"}
+
+
+async def _stub_qa(state):
+    return {"test_report": {"verdict": "pass"}, "current_node": "qa"}
+
+
+async def _stub_reviewer(state):
+    return {"review": {"verdict": "approve"}, "current_node": "reviewer"}
+
+
+async def _stub_docs(state):
+    return {"current_node": "docs"}
+
+
+@pytest.mark.asyncio
+async def test_each_node_emits_a_traced_span(tmp_path):
+    from pathlib import Path
+
+    from opentelemetry import trace as otel_trace
+
+    from aegis.core.config import AegisConfig
+    from aegis.obs import aegis_task_id_var, bootstrap_tracing
+    from aegis.obs.otel import reset_tracing_for_tests
+
+    reset_tracing_for_tests()
+    cfg = AegisConfig.model_validate(
+        {"project": {"name": "t"}, "observability": {"langfuse": {"enabled": False}}}
+    )
+    bootstrap_tracing(cfg, tmp_path)
+
+    from aegis.graph.team_graph import build_graph
+    from aegis.graph.state import TeamState
+
+    overrides = {
+        "pm": _stub_pm, "dev": _stub_dev, "qa": _stub_qa,
+        "reviewer": _stub_reviewer, "docs": _stub_docs,
+    }
+    graph = build_graph(node_overrides=overrides)
+    state: TeamState = {
+        "task_id": "t1", "task_path": "x", "worktree_path": ".",
+        "target_repo_root": ".", "plan": None, "implementation_status": "pending",
+        "test_report": None, "review": None, "pr_branch": None,
+        "budget_remaining": {"usd": 1.0, "seconds": 60.0, "input_tokens": 0.0, "output_tokens": 0.0},
+        "retry_counts": {}, "trace_id": "", "awaiting_human": False,
+        "blocked_reason": None, "current_node": None, "history": [],
+    }
+    token = aegis_task_id_var.set("t1")
+    try:
+        await graph.ainvoke(state)
+    finally:
+        aegis_task_id_var.reset(token)
+
+    otel_trace.get_tracer_provider().force_flush()
+    out = (tmp_path / "trace" / "t1.jsonl").read_text(encoding="utf-8")
+    for role in ("pm", "dev", "qa", "reviewer", "docs"):
+        assert f'"name": "{role}_node"' in out
+    reset_tracing_for_tests()
