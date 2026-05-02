@@ -55,5 +55,6 @@ def create_app(
 
 def _register_routes(app: FastAPI) -> None:
     """Mount all route modules. Tasks 8-11 fill these in incrementally."""
-    # Routes will be added by subsequent tasks.
-    return None
+    from aegis.web.routes.kanban import router as kanban_router
+
+    app.include_router(kanban_router)

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Aegis — Kanban{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    {% for col in columns %}
+    <section class="bg-white border border-slate-200 rounded-md p-3">
+        <header class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">{{ col.label }}</h2>
+            <span class="text-xs text-slate-400">{{ col.cards|length }}</span>
+        </header>
+        <ul class="space-y-2">
+            {% for card in col.cards %}
+            <li>
+                <a href="/task/{{ card.id }}" class="block p-3 border border-slate-200 rounded hover:bg-slate-50">
+                    <div class="text-xs text-slate-500">{{ card.id }} · {{ card.priority }}</div>
+                    <div class="text-sm">{{ card.title }}</div>
+                </a>
+            </li>
+            {% else %}
+            <li class="text-xs text-slate-400 italic">empty</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}
