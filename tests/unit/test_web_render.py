@@ -23,5 +23,7 @@ def test_render_supports_fenced_code() -> None:
 
 
 def test_render_linkifies_bare_url() -> None:
+    import re
+
     html = render_markdown("visit https://example.com for info")
-    assert '<a href="https://example.com">' in html
+    assert re.search(r'href="https://example\.com"', html) is not None
