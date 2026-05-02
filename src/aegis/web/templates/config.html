@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Aegis — Config{% endblock %}
+{% block content %}
+<section class="bg-white border border-slate-200 rounded-md p-4">
+    <h1 class="text-sm font-semibold mb-3">.aegis/config.yaml</h1>
+    <pre class="text-xs whitespace-pre overflow-x-auto bg-slate-50 p-3 rounded">{{ yaml_text }}</pre>
+    <p class="text-xs text-slate-500 mt-3">Read-only. Edit on disk and restart <code>aegis web</code>.</p>
+</section>
+{% endblock %}

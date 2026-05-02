@@ -56,9 +56,11 @@ def create_app(
 def _register_routes(app: FastAPI) -> None:
     """Mount all route modules."""
     from aegis.web.routes.actions import router as actions_router
+    from aegis.web.routes.config_view import router as config_router
     from aegis.web.routes.kanban import router as kanban_router
     from aegis.web.routes.task import router as task_router
 
     app.include_router(kanban_router)
     app.include_router(task_router)
     app.include_router(actions_router)
+    app.include_router(config_router)
