@@ -134,3 +134,14 @@ def test_logs_partial_polls_via_htmx(client: TestClient) -> None:
     response = client.get("/task/001")
     assert "/task/001/logs" in response.text
     assert "hx-trigger=\"every 1s\"" in response.text or "hx-trigger='every 1s'" in response.text
+
+
+def test_task_detail_rejects_traversal(client: TestClient) -> None:
+    response = client.get("/task/..%2F..%2Fpasswd")
+    # Either the middleware/router 404s on dotted segments, or our guard 400s.
+    assert response.status_code in (400, 404)
+
+
+def test_task_logs_rejects_traversal(client: TestClient) -> None:
+    response = client.get("/task/..%2F..%2Fpasswd/logs")
+    assert response.status_code in (400, 404)

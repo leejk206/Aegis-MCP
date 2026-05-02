@@ -93,3 +93,40 @@ def test_approve_without_origin_rejected(git_repo: Path) -> None:
         "/task/001/approve", headers={"X-CSRF-Token": app.state.csrf.token}
     )
     assert response.status_code == 403
+
+
+def test_approve_unknown_task_returns_404(app_and_client: tuple[object, TestClient]) -> None:
+    app, client = app_and_client
+    token = app.state.csrf.token
+    response = client.post("/task/999/approve", headers={"X-CSRF-Token": token})
+    assert response.status_code == 404
+
+
+def test_approve_task_not_in_review_returns_409(git_repo: Path) -> None:
+    aegis_dir = run_init(git_repo)
+    fm = TaskFrontmatter(
+        id="002",
+        title="t2",
+        status=TaskStatus.BACKLOG,
+        created=datetime.now(UTC),
+    )
+    task = Task(frontmatter=fm, body="body\n")
+    write_task(task, aegis_dir / "backlog" / "002-t2.md")
+    config = load_config(aegis_dir / "config.yaml")
+    app = create_app(
+        aegis_dir=aegis_dir, repo_root=git_repo, config=config,
+        host="127.0.0.1", port=8765,
+    )
+    client = TestClient(
+        app,
+        headers={"Host": "127.0.0.1:8765", "Origin": "http://127.0.0.1:8765"},
+    )
+    response = client.post("/task/002/approve", headers={"X-CSRF-Token": app.state.csrf.token})
+    assert response.status_code == 409
+
+
+def test_reject_unknown_task_returns_404(app_and_client: tuple[object, TestClient]) -> None:
+    app, client = app_and_client
+    token = app.state.csrf.token
+    response = client.post("/task/999/reject", headers={"X-CSRF-Token": token})
+    assert response.status_code == 404

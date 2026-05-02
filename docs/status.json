@@ -307,8 +307,8 @@
   "tests": {
     "framework": "pytest",
     "location": "tests/unit",
-    "file_count": 46,
-    "total_test_loc": 4108,
+    "file_count": 57,
+    "total_test_loc": 4820,
     "coverage_areas": [
       "core (config, task, worktree, lifecycle, budget)",
       "mcp_servers (fs, git, shell, project_index, _base)",
@@ -317,7 +317,7 @@
       "cli (main, init, task, config, run, status, stop, approve, reject, retry, inspect, daemon, logs, trace)",
       "obs (jsonl_exporter, otel, langsmith_exporter, langfuse_exporter, instrumentation)"
     ],
-    "local_run_status": "285 passed / 4 skipped excluding tests/unit/test_shell_mcp.py (pre-existing WSL env failures: missing `python` binary on PATH)",
+    "local_run_status": "334 passed / 4 skipped excluding tests/unit/test_shell_mcp.py (5 pre-existing async-instrumentation failures need pytest-asyncio; 4 pre-existing WSL env failures: missing python binary on PATH)",
     "ci_run_status": "passing per phase-5-complete tag"
   },
   "dependencies": {

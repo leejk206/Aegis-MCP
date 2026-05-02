@@ -16,14 +16,20 @@ from aegis.web.render import render_markdown
 router = APIRouter()
 
 
+def _validate_task_id(task_id: str) -> None:
+    if "/" in task_id or "\\" in task_id or ".." in task_id:
+        raise HTTPException(status_code=400, detail="invalid task_id")
+
+
 @router.get("/task/{task_id}", response_class=HTMLResponse)
 def task_detail(task_id: str, request: Request) -> HTMLResponse:
+    _validate_task_id(task_id)
     aegis_dir = request.app.state.aegis_dir
     repo_root = request.app.state.repo_root
     found = find_task(aegis_dir, task_id)
     if found is None:
         raise HTTPException(status_code=404, detail=f"task {task_id} not found")
-    task, task_path = found
+    task, _ = found
     fm = task.frontmatter
     diff_summary = diff_stat(repo_root, fm.pr_branch) if fm.pr_branch else ""
     diff_body = diff_full(repo_root, fm.pr_branch) if fm.pr_branch else ""
@@ -49,6 +55,7 @@ def task_detail(task_id: str, request: Request) -> HTMLResponse:
 
 @router.get("/task/{task_id}/logs", response_class=HTMLResponse)
 def task_logs(task_id: str, request: Request) -> HTMLResponse:
+    _validate_task_id(task_id)
     aegis_dir = request.app.state.aegis_dir
     trace_path = aegis_dir / "trace" / f"{task_id}.jsonl"
     lines = tail_jsonl(trace_path, max_lines=200)
