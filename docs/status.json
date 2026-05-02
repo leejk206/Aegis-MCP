@@ -180,6 +180,7 @@
           "commands/daemon.py",
           "commands/logs.py",
           "commands/trace.py",
+          "commands/web.py",
           "commands/stubs.py"
         ],
         "status": "implemented"
