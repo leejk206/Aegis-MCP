@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -17,7 +17,7 @@ def _seed_task(aegis_dir: Path, *, task_id: str, title: str, status: TaskStatus)
         id=task_id,
         title=title,
         status=status,
-        created=datetime.now(timezone.utc),
+        created=datetime.now(UTC),
     )
     task = Task(frontmatter=fm, body="## Goal\n\nDo the thing.\n")
     target = aegis_dir / status.value / f"{task_id}-{title.replace(' ', '-')}.md"

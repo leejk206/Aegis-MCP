@@ -10,18 +10,19 @@
     "readme": "README.md"
   },
   "snapshot": {
-    "as_of_date": "2026-05-01",
+    "as_of_date": "2026-05-03",
     "branch": "main",
-    "head_commit": "0a1997b0d2b8aa529d8a38e126222e19efec283a",
-    "head_subject": "docs: observability section in README",
-    "total_commits": 89,
-    "tracked_files": 121,
+    "head_commit": "pending",
+    "head_subject": "pending",
+    "total_commits": 102,
+    "tracked_files": 152,
     "tags": [
       "phase-1-complete",
       "phase-2-complete",
       "phase-3-complete",
       "phase-4-complete",
-      "phase-5-complete"
+      "phase-5-complete",
+      "phase-6-complete"
     ],
     "working_tree": {
       "untracked": [".cache/", ".claude.json"],
@@ -108,10 +109,20 @@
     {
       "id": 6,
       "name": "Web dashboard (read-only)",
-      "status": "not_started",
-      "plan": null,
-      "placeholders": ["src/aegis/web/__init__.py (empty)"],
-      "cli_stubs_for_phase_6": ["aegis web"]
+      "status": "complete",
+      "tag": "phase-6-complete",
+      "plan": "docs/superpowers/plans/2026-05-02-aegis-phase-6-web-dashboard.md",
+      "deliverables": [
+        "web/app.py — FastAPI factory + middleware/CSRF/Jinja2 wiring (no global state)",
+        "web/middleware.py — OriginHostMiddleware (Host whitelist + Origin check on POST)",
+        "web/csrf.py — process-scoped CSRF token (constant-time compare, header-or-form)",
+        "web/render.py — markdown-it-py renderer (commonmark preset, html disabled, linkify enabled)",
+        "web/log_tail.py — JSONL trace tail reusing cli.commands.logs._format_line",
+        "web/git_diff.py — diff_stat / diff_full subprocess wrappers (256 KB cap)",
+        "web/routes/{kanban,task,actions,config_view}.py",
+        "web/templates/{base,kanban,task,_logs,config}.html (HTMX 1.x + Tailwind 3 via CDN)",
+        "cli/commands/web.py — uvicorn launcher (replaces stub; foreground only)"
+      ]
     }
   ],
   "package_layout": {
@@ -187,8 +198,26 @@
       },
       "web": {
         "path": "src/aegis/web",
-        "files": ["__init__.py"],
-        "status": "placeholder_empty"
+        "files": [
+          "__init__.py",
+          "app.py",
+          "middleware.py",
+          "csrf.py",
+          "render.py",
+          "log_tail.py",
+          "git_diff.py",
+          "routes/__init__.py",
+          "routes/kanban.py",
+          "routes/task.py",
+          "routes/actions.py",
+          "routes/config_view.py",
+          "templates/base.html",
+          "templates/kanban.html",
+          "templates/task.html",
+          "templates/_logs.html",
+          "templates/config.html"
+        ],
+        "status": "implemented"
       }
     }
   },
@@ -206,11 +235,10 @@
       { "name": "inspect", "help": "Print a task's full markdown" },
       { "name": "daemon", "help": "start|stop|status|restart background driver" },
       { "name": "logs", "help": "Tail a task's JSONL trace (--follow polls every 250ms)" },
-      { "name": "trace", "help": "Open a task's trace in LangSmith/Langfuse, or hint aegis logs" }
+      { "name": "trace", "help": "Open a task's trace in LangSmith/Langfuse, or hint aegis logs" },
+      { "name": "web", "help": "Start the read-only dashboard (foreground uvicorn, 127.0.0.1:8765 by default)" }
     ],
-    "stubbed_for_future_phases": [
-      { "name": "web", "phase": 6, "behavior": "exits 2 with 'not implemented' message" }
-    ]
+    "stubbed_for_future_phases": []
   },
   "console_scripts": [
     "aegis = aegis.cli.main:app",
@@ -306,17 +334,21 @@
       "opentelemetry-sdk>=1.27",
       "opentelemetry-exporter-otlp-proto-http>=1.27",
       "langsmith>=0.1.140",
-      "langfuse>=2.50"
+      "langfuse>=2.50",
+      "fastapi>=0.110",
+      "uvicorn[standard]>=0.27",
+      "jinja2>=3.1",
+      "markdown-it-py[linkify]>=3.0"
     ],
-    "dev": ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "types-PyYAML>=6.0"]
+    "dev": ["pytest>=8.0", "ruff>=0.6", "mypy>=1.10", "types-PyYAML>=6.0", "httpx>=0.27"]
   },
   "tooling": {
     "ruff": { "line_length": 100, "target": "py311", "selected_rules": ["E", "F", "I", "B", "UP", "SIM"] },
     "mypy": { "strict": true, "warn_unreachable": true, "files": ["src/aegis"] }
   },
   "next_phase": {
-    "phase": 6,
-    "scope": "Read-only web dashboard (kanban + task view + approval endpoints), wire `aegis web`",
+    "phase": null,
+    "scope": "All originally-planned phases (1-6) complete. Items in `open_questions_deferred` remain candidates for follow-up phases.",
     "after_that": null
   },
   "open_questions_deferred": [

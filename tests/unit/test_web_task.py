@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -27,7 +27,7 @@ def _seed_task(
         id=task_id,
         title=title,
         status=status,
-        created=datetime.now(timezone.utc),
+        created=datetime.now(UTC),
         pr_branch=pr_branch,
         trace_id=trace_id,
     )

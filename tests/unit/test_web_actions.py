@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -18,7 +18,7 @@ def _seed_review_task(aegis_dir: Path, *, task_id: str = "001") -> None:
         id=task_id,
         title="t",
         status=TaskStatus.REVIEW,
-        created=datetime.now(timezone.utc),
+        created=datetime.now(UTC),
         pr_branch=f"aegis/{task_id}-t",
     )
     task = Task(frontmatter=fm, body="body\n")
