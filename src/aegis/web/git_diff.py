@@ -23,6 +23,8 @@ def _run(repo_root: Path, args: list[str]) -> str:
             ["git", "-C", str(repo_root), *args],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             check=False,
         )
     except FileNotFoundError:
