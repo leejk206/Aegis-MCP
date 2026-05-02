@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 
 __all__ = ["render_markdown"]
 
-_md = MarkdownIt("commonmark", {"html": False, "linkify": True, "breaks": False})
+_md = MarkdownIt("commonmark", {"html": False, "linkify": True, "breaks": False}).enable("linkify")
 
 
 def render_markdown(body: str) -> str:

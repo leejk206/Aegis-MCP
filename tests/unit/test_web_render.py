@@ -20,3 +20,8 @@ def test_render_supports_fenced_code() -> None:
     html = render_markdown("```python\nprint('hi')\n```")
     assert "<pre>" in html
     assert "print" in html
+
+
+def test_render_linkifies_bare_url() -> None:
+    html = render_markdown("visit https://example.com for info")
+    assert '<a href="https://example.com">' in html
