@@ -12,8 +12,8 @@
   "snapshot": {
     "as_of_date": "2026-05-03",
     "branch": "main",
-    "head_commit": "pending",
-    "head_subject": "pending",
+    "head_commit": "84ba1040ec20dfdd039c77eabcb42517a5b62811",
+    "head_subject": "docs(status): mark phase 6 complete + Web dashboard section",
     "total_commits": 102,
     "tracked_files": 152,
     "tags": [
