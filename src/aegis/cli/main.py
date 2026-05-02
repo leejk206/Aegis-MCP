@@ -46,6 +46,7 @@ from aegis.cli.commands.run import register as register_run  # noqa: E402
 from aegis.cli.commands.status import register as register_status  # noqa: E402
 from aegis.cli.commands.stop import register as register_stop  # noqa: E402
 from aegis.cli.commands.task import register as register_task  # noqa: E402
+from aegis.cli.commands.web import register as register_web  # noqa: E402
 
 register_init(app)
 register_task(app)
@@ -60,3 +61,4 @@ register_inspect(app)
 register_logs(app)
 register_trace(app)
 register_daemon(app)
+register_web(app)
