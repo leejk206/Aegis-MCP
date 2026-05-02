@@ -1,0 +1,6 @@
+{% if lines %}
+<pre class="text-xs whitespace-pre-wrap bg-slate-50 p-3 rounded max-h-96 overflow-y-auto">{% for line in lines %}{{ line }}
+{% endfor %}</pre>
+{% else %}
+<div class="text-xs text-slate-400 italic">no trace yet</div>
+{% endif %}
