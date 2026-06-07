@@ -115,6 +115,18 @@ in `.aegis/config.yaml` (defaults: Opus for PM/Reviewer, Sonnet for
 Dev/QA, Haiku for Docs). Tool allowlists per role are enforced by the
 graph layer, not by trust in the prompt.
 
+**Shell sandboxing:** `aegis-shell-mcp` executes only commands listed in
+the `ALLOW_CMDS` environment variable, which is set per-server under
+`mcp.servers[shell].env.ALLOW_CMDS` in `.aegis/config.yaml`. Unlisted
+commands are rejected before execution. This is the primary sandboxing
+boundary for the shell MCP server.
+
+**Cost & time safety:** Each task has a configurable USD budget and
+wallclock timeout, set under `budget.task.usd` (default $2.00) and
+`budget.task.minutes` (default 30 min) in `.aegis/config.yaml`. The
+graph halts the task if either limit is hit, emitting a `block` signal
+that moves the task to `blocked/`.
+
 ---
 
 ## Web dashboard
