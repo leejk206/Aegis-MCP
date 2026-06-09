@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -15,6 +16,7 @@ from aegis.core.task import (
     write_task,
 )
 from aegis.graph.runtime import (
+    _default_node_overrides,
     reject_task,
     resume_after_approve,
     run_one_task,
@@ -244,3 +246,79 @@ def test_run_one_task_writes_trace_id_to_frontmatter(tmp_path: Path) -> None:
     assert refreshed.frontmatter.trace_id is not None
     assert len(refreshed.frontmatter.trace_id) == 32  # 128-bit OTel id, hex
     reset_tracing_for_tests()
+
+
+def test_default_node_overrides_prebind_config() -> None:
+    """Regression: the CLI/run path (node_overrides=None) must reach build_graph
+    with the role nodes' keyword-only ``config`` already bound.
+
+    Before the fix, ``_run_one_task_async`` passed ``node_overrides=None`` and
+    ``build_graph`` added the raw ``*_node`` functions, so LangGraph invoked them
+    with ``pm_node() missing 1 required keyword-only argument: 'config'`` — a
+    crash the existing tests never hit because they always inject stub nodes.
+    """
+    config = AegisConfig(project=ProjectConfig(name="t"))
+    overrides = _default_node_overrides(config)
+
+    assert set(overrides) == {"pm", "dev", "qa", "reviewer", "docs"}
+    for role, fn in overrides.items():
+        assert isinstance(fn, functools.partial), f"{role} node is not pre-bound"
+        assert fn.keywords.get("config") is config, f"{role} node missing bound config"
+
+
+def test_resume_refreshes_task_path_for_file_reading_nodes(tmp_path: Path) -> None:
+    """Regression: a node that reads ``state['task_path']`` on resume (like the
+    real Docs node) must see the task file's *current* location.
+
+    After ``run`` pauses at ``review/``, the file has moved out of
+    ``in-progress/``, but the checkpoint still holds the old path. Before the
+    fix the Docs node did ``parse_task(state['task_path'])`` against the stale
+    ``in-progress/`` path and ``aegis approve`` died with ``FileNotFoundError``.
+    The existing resume test never caught it because its Docs stub returns a
+    canned dict without touching the filesystem.
+    """
+    repo, aegis = _bootstrap_repo(tmp_path)
+    p = _seed_task(aegis)
+    config = AegisConfig(project=ProjectConfig(name="t"))
+
+    seen: dict[str, Path] = {}
+
+    async def docs_reads_file(s: dict) -> dict:
+        path = Path(s["task_path"])
+        parse_task(path)  # raises FileNotFoundError on a stale path
+        seen["docs"] = path
+        return {"current_node": "docs", "implementation_status": "done"}
+
+    resume_overrides = _stub_nodes(verdict="approve")
+    resume_overrides["docs"] = docs_reads_file
+
+    with (
+        patch("aegis.graph.runtime.create_worktree") as cw,
+        patch("aegis.graph.runtime.remove_worktree") as rw,
+        patch("aegis.graph.runtime.merge_worktree_into_main") as merge,
+    ):
+        cw.side_effect = lambda repo_root, worktree_path, branch: worktree_path.mkdir(
+            parents=True, exist_ok=True
+        )
+        rw.side_effect = lambda *a, **kw: None
+        merge.side_effect = lambda *a, **kw: None
+
+        run_one_task(
+            task_path=p,
+            aegis_dir=aegis,
+            repo_root=repo,
+            config=config,
+            node_overrides=_stub_nodes(verdict="approve"),
+        )
+        resume_after_approve(
+            task_id="001",
+            aegis_dir=aegis,
+            repo_root=repo,
+            config=config,
+            node_overrides=resume_overrides,
+        )
+
+    # Docs read the task from its current dir (review/), not the stale
+    # in-progress/ path, and the task finished in done/.
+    assert seen["docs"].parent.name in ("review", "done")
+    assert next((aegis / "done").glob("001-*.md"), None) is not None

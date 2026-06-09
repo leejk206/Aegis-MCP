@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import subprocess
+from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
@@ -31,6 +32,7 @@ from aegis.core.task import (
 )
 from aegis.core.worktree import create_worktree, remove_worktree
 from aegis.graph.checkpointer import open_async_checkpointer
+from aegis.graph.nodes import dev_node, docs_node, pm_node, qa_node, reviewer_node
 from aegis.graph.state import TeamState, initial_state
 from aegis.graph.team_graph import build_graph
 from aegis.obs import aegis_task_id_var, bootstrap_tracing
@@ -41,6 +43,23 @@ __all__ = [
     "reject_task",
     "merge_worktree_into_main",
 ]
+
+
+def _default_node_overrides(config: AegisConfig) -> dict[str, Any]:
+    """Bind the AegisConfig into each role node.
+
+    ``build_graph`` expects node overrides whose keyword-only ``config`` is
+    already bound. The CLI / run path supplies no overrides, so without this the
+    default nodes are added unbound and LangGraph invokes them missing
+    ``config``. Binding here is what makes a real (non-stubbed) run work.
+    """
+    return {
+        "pm": partial(pm_node, config=config),
+        "dev": partial(dev_node, config=config),
+        "qa": partial(qa_node, config=config),
+        "reviewer": partial(reviewer_node, config=config),
+        "docs": partial(docs_node, config=config),
+    }
 
 
 def merge_worktree_into_main(repo_root: Path, branch: str) -> None:
@@ -124,8 +143,11 @@ async def _run_one_task_async(
             task.frontmatter.trace_id = trace_id_hex
             write_task(task, task_path)
 
+            overrides = (
+                node_overrides if node_overrides is not None else _default_node_overrides(config)
+            )
             async with open_async_checkpointer(aegis_dir) as saver:
-                graph = build_graph(node_overrides=node_overrides, checkpointer=saver)
+                graph = build_graph(node_overrides=overrides, checkpointer=saver)
                 final = await graph.ainvoke(state, config=cfg)
     finally:
         aegis_task_id_var.reset(token)
@@ -192,8 +214,16 @@ async def _resume_after_approve_async(
         tracer = otel_trace.get_tracer("aegis.runtime")
         with tracer.start_as_current_span("aegis.task.resume") as root_span:
             root_span.set_attribute("aegis.task_id", task_id)
+            overrides = (
+                node_overrides if node_overrides is not None else _default_node_overrides(config)
+            )
             async with open_async_checkpointer(aegis_dir) as saver:
-                graph = build_graph(node_overrides=node_overrides, checkpointer=saver)
+                graph = build_graph(node_overrides=overrides, checkpointer=saver)
+                # The checkpoint still holds the task_path from the first run
+                # (.aegis/in-progress/...), but the task file has since moved to
+                # review/. Refresh it so resumed nodes (e.g. Docs) read the file
+                # from its current location instead of crashing on a stale path.
+                await graph.aupdate_state(cfg, {"task_path": str(task_path)})
                 final = await graph.ainvoke(None, config=cfg)
     finally:
         aegis_task_id_var.reset(token)
